@@ -7,6 +7,18 @@ else
 
     % load the table
     healthMap = readtable('Health Map.xlsx', 'Sheet', "Health Map");
+    
+    % define oepration cycle category
+    % NOTE: cycle names must be the same as the excel sheet!
+    cycles = categorical({'BasicOp','DPAudio','LEXUSB','LEXPwr',...
+                          'Link', 'REXPwr', 'REXDevice', 'LEXDP',...
+                          'REXDP', 'Standby', 'Restart', 'Shutdown',...
+                          'SideChannelCycle', 'RS232Cycle'});
+    cycles = reordercats(cycles,...
+                         {'BasicOp','DPAudio','LEXUSB','LEXPwr',...
+                          'Link', 'REXPwr', 'REXDevice', 'LEXDP',...
+                          'REXDP', 'Standby', 'Restart', 'Shutdown',...
+                          'SideChannelCycle', 'RS232Cycle'});
 
     % check the summary of the table, check the variable data type
     % summary(healthMap);
@@ -325,12 +337,42 @@ else
 
     %% get all direct connect issue, break down by host, or cycles
 
-    directFilter = zeros(height(healthMap),1);
-
-    for m = healthMap.Properties.VariableNames(22:35)
-        x = contains(healthMap.(char(m)), 'Direct');
+    % create a counter table
+    varNames = string(zeros(14,1))';
+    varNames(:) = 'double';
+    directCntTable = table('Size', [1 14],...
+                        'VariableTypes',varNames,...
+                        'VariableNames', healthMap.Properties.VariableNames(22:35));
+    
+                    
+    totalDirect = 0;
+    directMap = healthMap(buildFilter, :);
+    directFilter = zeros(height(directMap),1);
+    for m = directMap.Properties.VariableNames(22:35)
+        x = contains(directMap.(char(m)), 'Direct');
+        % add the count to the counter table, as well as the total counter
+        directCntTable.(char(m)) = sum(x);
+        totalDirect = totalDirect + sum(x);
+        % update the direct connect filter
         directFilter = directFilter | x;
     end
-    t4 = healthMap(directFilter, :);
-
+    % master table with only the direct connect issues
+    t4 = directMap(directFilter, :);
+    
+    % make a plot for the distribution of the direct connect issues, break
+    % down by operation cycles.
+    figure();
+    barDirect =bar(cycles, table2array(directCntTable(1,:)));
+    % add labels to bar graph
+    xtipsbarDirect = barDirect(1).XEndPoints;
+    ytipsbarDirect = barDirect(1).YEndPoints;
+    labelsbarDirect = string(barDirect(1).YData);
+    text(xtipsbarDirect,ytipsbarDirect,labelsbarDirect,...
+        'HorizontalAlignment','center',...
+        'VerticalAlignment','bottom')
+    ylabel('Total Bugs');
+    ylim([0 max(table2array(directCntTable(1,:)))*1.2]);
+    title(strcat(string(totalDirect), ' Total Direct Connect Issues Break Down by Cycles in Build ', string(t1.Build(1))));
+    
+   
 end
