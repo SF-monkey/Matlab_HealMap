@@ -322,28 +322,53 @@ else
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    %% find CNRs
+    %% find CNRs, break down by host, or cycles
+    
+    varNames = string(zeros(14,1))';
+    varNames(:) = 'double';
+    
+    % create a counter table
+    cnrCntTable = table('Size', [1 14],...
+                        'VariableTypes',varNames,...
+                        'VariableNames', healthMap.Properties.VariableNames(22:35));
 
+    totalCNR = 0;
+    cnrMap = healthMap(buildFilter, :);
     % create zero array with the same height as the healthMao table
-    canNotReproduceFilter = zeros(height(healthMap),1);
+    canNotReproduceFilter = zeros(height(cnrMap),1);
 
-    for m = healthMap.Properties.VariableNames(22:35)
-        x = contains(healthMap.(char(m)), 'CNR');
+    for m = cnrMap.Properties.VariableNames(22:35)
+        x = contains(cnrMap.(char(m)), 'CNR');
+        % add the count to the counter table, as well as the total counter
+        cnrCntTable.(char(m)) = sum(x);
+        totalCNR = totalCNR + sum(x);
+        % update the CNR filter
         canNotReproduceFilter = canNotReproduceFilter | x;
     end
-    t3 = healthMap(canNotReproduceFilter, :);
+    t3 = cnrMap(canNotReproduceFilter, :);
+    
+    % make a plot for the direct connect issues, group by operation cycles
+    figure();
+    barCNR =bar(cycles, table2array(cnrCntTable(1,:)));
+    % add labels to bar graph
+    xtipsbarCNR = barCNR(1).XEndPoints;
+    ytipsbarCNR = barCNR(1).YEndPoints;
+    labelsbarCNR = string(barCNR(1).YData);
+    text(xtipsbarCNR,ytipsbarCNR,labelsbarCNR,...
+        'HorizontalAlignment','center',...
+        'VerticalAlignment','bottom')
+    ylabel('Total Bugs');
+    ylim([0 max(table2array(cnrCntTable(1,:)))*1.2]);
+    title(strcat(string(totalCNR), ' Total CNRs Break Down by Cycles in Build ', string(t1.Build(1))));
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     %% get all direct connect issue, break down by host, or cycles
 
     % create a counter table
-    varNames = string(zeros(14,1))';
-    varNames(:) = 'double';
     directCntTable = table('Size', [1 14],...
                         'VariableTypes',varNames,...
                         'VariableNames', healthMap.Properties.VariableNames(22:35));
-    
                     
     totalDirect = 0;
     directMap = healthMap(buildFilter, :);
@@ -359,8 +384,7 @@ else
     % master table with only the direct connect issues
     t4 = directMap(directFilter, :);
     
-    % make a plot for the distribution of the direct connect issues, break
-    % down by operation cycles.
+    % make a plot for the direct connect issues, group by operation cycles
     figure();
     barDirect =bar(cycles, table2array(directCntTable(1,:)));
     % add labels to bar graph
@@ -374,5 +398,8 @@ else
     ylim([0 max(table2array(directCntTable(1,:)))*1.2]);
     title(strcat(string(totalDirect), ' Total Direct Connect Issues Break Down by Cycles in Build ', string(t1.Build(1))));
     
-   
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+    
 end
