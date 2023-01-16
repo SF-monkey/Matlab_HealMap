@@ -1,0 +1,9 @@
+* stacked bar plot, percentage of pass rate for all Builds
+* bar plot, monitor with most fails per Build
+* bar plot, DUTs with most fails per Build
+* bar plot, Hosts with most fails per Build
+* bar plot, failing DUTs break down by cycles, per Build
+* bar plot, CNRs break down by DUTs, per Build
+* bar plot, Direct Connect break down by DUTs, per Build
+* bar plot, total bugs for individual cycle, for all Builds
+* base on the behavior of a failing DUT on one build, find how it would impact other tests.
