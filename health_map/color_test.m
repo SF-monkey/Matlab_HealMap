@@ -1,9 +1,9 @@
 close all
 
 %% edit parameters here
-rows = 5000;
-startColIdx = 'L';
-endColIdx = 'S';
+rows = 5000; % number of rows to scan
+startColIdx = 'L'; % starting column index needed for scanning (from excel)
+endColIdx = 'S'; % the last colomn index needed for scanning (from excel)
 bgColor = 'FF C7 CE'; % need to put spaces in between RGB value
 
 %% main
