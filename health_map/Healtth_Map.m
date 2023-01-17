@@ -1,12 +1,14 @@
-close all
+close all;
+clc;
 
+%% main
 [fn, fp, index] = uigetfile('*.xlsx');
 if index == 0
     disp('No file selected!');
 else
 
     % load the table
-    healthMap = readtable('Health Map.xlsx', 'Sheet', "Health Map");
+    healthMap = readtable(strcat(fp,fn), 'Sheet', "Health Map");
     
     % define oepration cycle category
     % NOTE: cycle names must be the same as the excel sheet!
