@@ -2,7 +2,7 @@ close all;
 clear;
 clc;
 
-%% edit parameters here
+%% edit variables here
 sheetname = 'Health Map';
 rows = 5000; % number of rows to scan
 startColIdx = 'L'; % starting column index needed for scanning (from excel)
@@ -24,6 +24,7 @@ else
     bgColor = hex2dec(strjoin(fliplr(split(bgColor,' ')'),''));
     % create cell array, letters subtraction is ASCII code subtraction
     colorsMap = cell(rows, (endColIdx - startColIdx +1));
+    % loop through each cell to fine the red cell
     for m = startColIdx:endColIdx
         for n = 1:rows
             curCell = strcat(m, num2str(n, '%0d'));
