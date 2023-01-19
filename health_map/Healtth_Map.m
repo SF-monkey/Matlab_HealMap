@@ -8,7 +8,11 @@ if index == 0
 else
 
     % load the table
+    % must run the 'color_test.m' once if health map file is updated.
     healthMap = readtable(strcat(fp,fn), 'Sheet', "Health Map");
+    failDev = readtable(strcat(fp,'failDevices.xlsx'), 'Format', 'auto');
+    tmpHMSize = size(healthMap);
+    hm = [healthMap, failDev(1:tmpHMSize(1), :)];
     
     % define oepration cycle category
     % NOTE: cycle names must be the same as the excel sheet!
@@ -30,19 +34,19 @@ else
 
     % create individual variable filters
     % hostFilter = ~cellfun(@isempty, strfind(healthMap.Host, 'Host 1'));
-    buildFilter = healthMap.Build == 88;
-    hostFilter = contains(healthMap.Host, 'Host 1');
-    resultFilter = contains(healthMap.Result, 'Real');
-    dut1Filter = contains(healthMap.DUT1, 'Go');
-    basicOpFilter = contains(healthMap.BasicOp, 'Direct');
+    buildFilter = hm.Build == 88;
+    hostFilter = contains(hm.Host, 'Host 1');
+    resultFilter = contains(hm.Result, 'Real');
+    dut1Filter = contains(hm.DUT1, 'Go');
+    basicOpFilter = contains(hm.BasicOp, 'Direct');
 
     % combine filters as needed
     mixFilter = resultFilter & buildFilter;
-    mixFilterBB = resultFilter & healthMap.Build == 92;
+    mixFilterBB = resultFilter & hm.Build == 92;
 
     % apply filter to original table
-    t1 = healthMap(mixFilter, :);
-    t1BB = healthMap(mixFilterBB, :);
+    t1 = hm(mixFilter, :);
+    t1BB = hm(mixFilterBB, :);
 
     % subset table by variable as needed
     t1Sub = t1(:, ["Units", "Host", "TotalBugs"]);
@@ -148,13 +152,13 @@ else
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     %% BasicOp Direct Connect table
-    t2 = healthMap(basicOpFilter, :);
+    t2 = hm(basicOpFilter, :);
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     %% find top 3 hosts that has most Fails
 
-    failHostTable = healthMap(resultFilter, :);
+    failHostTable = hm(resultFilter, :);
     failHostCnt = groupcounts(failHostTable, 'Host');
     failHostCnt = sortrows(failHostCnt,'GroupCount', 'descend');
     top3FailHost = head(failHostCnt, 3);
@@ -166,21 +170,21 @@ else
     BugCountVars = ["Units", "Host", "TotalBugs"];
     % class(BugCountVars), result is a 1x3 string array.
 
-    ravenFilter = strcmp(healthMap.Units, 'Raven');
-    ravenTable = healthMap(ravenFilter & resultFilter & buildFilter, BugCountVars);
+    ravenFilter = strcmp(hm.Units, 'Raven');
+    ravenTable = hm(ravenFilter & resultFilter & buildFilter, BugCountVars);
     ravenSubStat = grpstats(ravenTable,["Units", "Host"]);
 
-    ravenProFilter = contains(healthMap.Units, 'Raven Pro');
-    ravenProTable = healthMap(ravenProFilter & resultFilter & buildFilter, BugCountVars);
+    ravenProFilter = contains(hm.Units, 'Raven Pro');
+    ravenProTable = hm(ravenProFilter & resultFilter & buildFilter, BugCountVars);
     ravenProSubStat = grpstats(ravenProTable,["Units", "Host"]);
 
-    maverickFilter = contains(healthMap.Units, 'Maverick');
-    maverickTable = healthMap(maverickFilter & resultFilter & buildFilter, BugCountVars);
+    maverickFilter = contains(hm.Units, 'Maverick');
+    maverickTable = hm(maverickFilter & resultFilter & buildFilter, BugCountVars);
     maverickSubStat = grpstats(maverickTable,["Units", "Host"]);
 
-    asicFilter = contains(healthMap.Units, 'ASIC');
-    buildFilter92 = healthMap.Build == 92;
-    asicTable = healthMap(asicFilter & resultFilter & buildFilter92, BugCountVars);
+    asicFilter = contains(hm.Units, 'ASIC');
+    buildFilter92 = hm.Build == 92;
+    asicTable = hm(asicFilter & resultFilter & buildFilter92, BugCountVars);
     asicSubStat = grpstats(asicTable,["Units", "Host"]);
 
 
@@ -332,11 +336,11 @@ else
     % create a counter table
     cnrCntTable = table('Size', [1 14],...
                         'VariableTypes',varNames,...
-                        'VariableNames', healthMap.Properties.VariableNames(22:35));
+                        'VariableNames', hm.Properties.VariableNames(22:35));
 
     totalCNR = 0;
-    cnrMap = healthMap(buildFilter, :);
-    % create zero array with the same height as the healthMao table
+    cnrMap = hm(buildFilter, :);
+    % create zero array with the same height as the healthMap table
     canNotReproduceFilter = zeros(height(cnrMap),1);
 
     for m = cnrMap.Properties.VariableNames(22:35)
@@ -370,10 +374,10 @@ else
     % create a counter table
     directCntTable = table('Size', [1 14],...
                         'VariableTypes',varNames,...
-                        'VariableNames', healthMap.Properties.VariableNames(22:35));
+                        'VariableNames', hm.Properties.VariableNames(22:35));
                     
     totalDirect = 0;
-    directMap = healthMap(buildFilter, :);
+    directMap = hm(buildFilter, :);
     directFilter = zeros(height(directMap),1);
     for m = directMap.Properties.VariableNames(22:35)
         x = contains(directMap.(char(m)), 'Direct');

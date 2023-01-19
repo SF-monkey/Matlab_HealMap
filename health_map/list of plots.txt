@@ -1,20 +1,20 @@
 Real Fails:
-* bar plot, real fail count per build
-* bar plot, real fail count break down by host, per build
-* bar plot, real fail count break down by cycle, per build
+** bar plot, real fail count per build
+** bar plot, real fail count break down by host, per build
+** bar plot, real fail count break down by cycle, per build
 
 CNRs:
-* bar plot, CNRs count per build
+** bar plot, CNRs count per build
 * bar plot, CNRs count break down by host, per build
 * bar plot, CNRs count break down by cycle, per build
 
 Cypress:
-* bar plot, Cypress count per build
+** bar plot, Cypress count per build
 * bar plot, Cypress count break down by host, per build
 * bar plot, Cypress count break down by cycle, per build
 
 Direct Connect:
-* bar plot, Direct connect issues count per build
+** bar plot, Direct connect issues count per build
 * bar plot, Direct connect count break down by host, per build
 * bar plot, Direct connect count break down by cycle, per build
 
@@ -26,11 +26,11 @@ Hosts/DUTs/monitors/switches usage:
 * bar plot, hosts used in test, per build
 
 Summary:
-* stacked bar plot or pie chart, distribudion of Direct, CNR, Cypress, and Real fails, per build
+** grouped bar plot, distribudion of Direct, CNR, Cypress, and Real fails, per build
 
 
 =================
-Plots that require checking rhe red cell/failing devices in health map:
+Plots that require checking the red cell/failing devices in health map:
 
 * bar plot, fail counts in Port 1,2,3,4, per build
 This tells if different ports perform differently.

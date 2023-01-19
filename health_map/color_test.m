@@ -39,5 +39,11 @@ else
 
     wb.Close;
     excel.Quit;
+    
+    % create a copy
+    failDevices = cell2table(colorsMap(2:end,:), "VariableNames",...
+                     ["fail_Switch" "fail_Monitor" "fail_DUT1" "fail_DUT2"...
+                     "fail_DUT3" "fail_DUT4" "fail_Ethernet Side Channel" "fail_RS232"]);
+    writetable(failDevices,'failDevices.xlsx')
 end
 
