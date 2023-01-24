@@ -48,38 +48,44 @@ else
         
         % real fails count per build
         buildFailCnt(buildList(m) - min(buildList) + 1,1) = sum(bT.TotalBugs);
+              
+        % create lists for variable types
+        varTypesCycle = string(zeros(14,1))';
+        varTypesCycle(:) = 'double';
+        varTypesHost = string(zeros(length(unique(hm.Host)),1))';
+        varTypesHost(:) = 'double';
         
-        % CNR count per build
-        varNamesCycle = string(zeros(14,1))';
-        varNamesCycle(:) = 'double';
-        varNamesHost = string(zeros(length(unique(hm.Host)),1))';
-        varNamesHost(:) = 'double';
-        totalCNR = 0;
+        
+        %%%% CNR count per build %%%%
+        buildTotalCNR = 0;
         
         % create CNR counter table by cycle
-        cnrCntCycle = table('Size', [1 14],...
-            'VariableTypes',varNamesCycle,...
+        cnrCntByCycle = table('Size', [1 14],...
+            'VariableTypes',varTypesCycle,...
             'VariableNames', hm.Properties.VariableNames(22:35));
         
         % create CNR counter table by host
-        cnrCntHost = table('Size', [1 length(unique(hm.Host))],...
-            'VariableTypes',varNamesHost,...
+        cnrCntByHost = table('Size', [1 length(unique(hm.Host))],...
+            'VariableTypes',varTypesHost,...
             'VariableNames', unique(hm.Host));
         
         % create zero array with the same height as the Build table
         cnrFilter = zeros(height(bT),1);
         
+        %%%%% Total CNRs Break Down by Cycles in each Build %%%%%
+        
         for n = bT.Properties.VariableNames(22:35)
+            % x is a logical array with same height as build table
             x = contains(bT.(char(n)), 'CNR');
-            cnrCntCycle.(char(n)) = sum(x);
-            totalCNR = totalCNR + sum(x);
+            cnrCntByCycle.(char(n)) = sum(x);
+            buildTotalCNR = buildTotalCNR + sum(x);
             % add the count to the according cycle
             buildCNRsCnt(buildList(m) - min(buildList) + 1,1) =...
                 buildCNRsCnt(buildList(m) - min(buildList) + 1,1) + sum(x);
             cnrFilter = cnrFilter | x;
         end
         
-        barCNRCycle = bar(cycles, table2array(cnrCntCycle(1,:)));
+        barCNRCycle = bar(cycles, table2array(cnrCntByCycle(1,:)));
         % add labels to bar graph
         xtipsCNRCycle = barCNRCycle(1).XEndPoints;
         ytipsCNRCycle = barCNRCycle(1).YEndPoints;
@@ -88,22 +94,25 @@ else
             'HorizontalAlignment','center',...
             'VerticalAlignment','bottom')
         ylabel('Total CNRs');
-        ylim([0 max(table2array(cnrCntCycle(1,:)))*1.2+0.1]);
-        title(strcat(string(totalCNR), ' Total CNRs Break Down by Cycles in Build ', string(buildList(m))));
+        ylim([0 max(table2array(cnrCntByCycle(1,:)))*1.2+0.1]);
+        title(strcat(string(buildTotalCNR), ' Total CNRs Break Down by Cycles in Build ', string(buildList(m))));
         saveas(barCNRCycle, strcat(pwd,'\Plots\', 'Total CNRs Break Down by Cycles in Build ', string(buildList(m)), '.png'));
         close(gcf);
        
+        
+        %%%%% Total CNRs Break Down by Hosts in each Build %%%%%
         cnrBT = bT(cnrFilter, :);
         
         for n = 1:height(cnrBT)
             % find how many times CNR occurs within a row
             x = sum(contains(table2cell(cnrBT(n, 22:35)), 'CNR'));
             % add the count to the according Host 
-            cnrCntHost.(char(table2cell(cnrBT(n,10)))) =...
-                cnrCntHost.(char(table2cell(cnrBT(n,10)))) + x;
+            cnrCntByHost.(char(table2cell(cnrBT(n,10)))) =...
+                cnrCntByHost.(char(table2cell(cnrBT(n,10)))) + x;
         end
         
-        barCNRHost = bar(categorical(unique(hm.Host)), table2array(cnrCntHost(1,:)));
+        cnrByHost = figure();
+        barCNRHost =  bar(categorical(unique(hm.Host)), table2array(cnrCntByHost(1,:)));
         % add labels to bar graph
         xtipsCNRHost = barCNRHost(1).XEndPoints;
         ytipsCNRHost = barCNRHost(1).YEndPoints;
@@ -112,24 +121,153 @@ else
             'HorizontalAlignment','center',...
             'VerticalAlignment','bottom')
         ylabel('Total CNRs');
-        ylim([0 max(table2array(cnrCntHost(1,:)))*1.2+0.1]);
-        title(strcat(string(totalCNR), ' Total CNRs Break Down by Host in Build ', string(buildList(m))));
+        ylim([0 max(table2array(cnrCntByHost(1,:)))*1.2+0.1]);
+        title(strcat(string(buildTotalCNR), ' Total CNRs Break Down by Host in Build ', string(buildList(m))));
+        set(cnrByHost,'position',[0,0,1920,1080]);
         saveas(barCNRHost, strcat(pwd,'\Plots\', 'Total CNRs Break Down by Host in Build ', string(buildList(m)), '.png'));
         close(gcf);
         
-        % Cypress count per build
+        %%%% Cypress count per build %%%%
+        buildTotalCypress = 0;
+        
+        % create Cypress counter table by cycle
+        cyCntByCycle = table('Size', [1 14],...
+            'VariableTypes',varTypesCycle,...
+            'VariableNames', hm.Properties.VariableNames(22:35));
+        
+        % create Cypress counter table by host
+        cyCntByHost = table('Size', [1 length(unique(hm.Host))],...
+            'VariableTypes',varTypesHost,...
+            'VariableNames', unique(hm.Host));
+        
+        % create zero array with the same height as the Build table
+        cyFilter = zeros(height(bT),1);
+        
+        %%%%% Total Cypress Break Down by Cycles in each Build %%%%%
+        
         for n = bT.Properties.VariableNames(22:35)
+            % x is a logical array with same height as build table
             x = contains(bT.(char(n)), 'Cypress');
+            cyCntByCycle.(char(n)) = sum(x);
+            buildTotalCypress = buildTotalCypress + sum(x);
+            % add the count to the according cycle
             buildCypressCnt(buildList(m) - min(buildList) + 1,1) =...
                 buildCypressCnt(buildList(m) - min(buildList) + 1,1) + sum(x);
+            cyFilter = cyFilter | x;
         end
         
-        % Cypress count per build
+        barCypressCycle = bar(cycles, table2array(cyCntByCycle(1,:)));
+        % add labels to bar graph
+        xtipsCypressCycle = barCypressCycle(1).XEndPoints;
+        ytipsCypressCycle = barCypressCycle(1).YEndPoints;
+        labelsCypressCycle = string(barCypressCycle(1).YData);
+        text(xtipsCypressCycle,ytipsCypressCycle,labelsCypressCycle,...
+            'HorizontalAlignment','center',...
+            'VerticalAlignment','bottom')
+        ylabel('Total Cypress');
+        ylim([0 max(table2array(cyCntByCycle(1,:)))*1.2+0.1]);
+        title(strcat(string(buildTotalCypress), ' Total Cypress Issues Break Down by Cycles in Build ', string(buildList(m))));
+        saveas(barCypressCycle, strcat(pwd,'\Plots\', 'Total Cypress Issues Break Down by Cycles in Build ', string(buildList(m)), '.png'));
+        close(gcf);
+       
+        
+        %%%%% Total Cypress Break Down by Hosts in each Build %%%%%
+        cyBT = bT(cyFilter, :);
+        
+        for n = 1:height(cyBT)
+            % find how many times Cypress occurs within a row
+            x = sum(contains(table2cell(cyBT(n, 22:35)), 'Cypress'));
+            % add the count to the according Host 
+            cyCntByHost.(char(table2cell(cyBT(n,10)))) =...
+                cyCntByHost.(char(table2cell(cyBT(n,10)))) + x;
+        end
+        
+        cyByHost = figure();
+        barCypressHost =  bar(categorical(unique(hm.Host)), table2array(cyCntByHost(1,:)));
+        % add labels to bar graph
+        xtipsCypressHost = barCypressHost(1).XEndPoints;
+        ytipsCypressHost = barCypressHost(1).YEndPoints;
+        labelsCypressHost = string(barCypressHost(1).YData);
+        text(xtipsCypressHost,ytipsCypressHost,labelsCypressHost,...
+            'HorizontalAlignment','center',...
+            'VerticalAlignment','bottom')
+        ylabel('Total Cypress');
+        ylim([0 max(table2array(cyCntByHost(1,:)))*1.2+0.1]);
+        title(strcat(string(buildTotalCypress), ' Total Cypress Issues Break Down by Host in Build ', string(buildList(m))));
+        set(cyByHost,'position',[0,0,1920,1080]);
+        saveas(barCypressHost, strcat(pwd,'\Plots\', 'Total Cypress Issues Break Down by Host in Build ', string(buildList(m)), '.png'));
+        close(gcf);
+        
+        %%%% Direct count per build %%%%
+        buildTotalDirect = 0;
+        
+        % create Direct counter table by cycle
+        drCntByCycle = table('Size', [1 14],...
+            'VariableTypes',varTypesCycle,...
+            'VariableNames', hm.Properties.VariableNames(22:35));
+        
+        % create Direct counter table by host
+        drCntByHost = table('Size', [1 length(unique(hm.Host))],...
+            'VariableTypes',varTypesHost,...
+            'VariableNames', unique(hm.Host));
+        
+        % create zero array with the same height as the Build table
+        drFilter = zeros(height(bT),1);
+        
+        %%%%% Total Direct Break Down by Cycles in each Build %%%%%
+        
         for n = bT.Properties.VariableNames(22:35)
+            % x is a logical array with same height as build table
             x = contains(bT.(char(n)), 'Direct');
+            drCntByCycle.(char(n)) = sum(x);
+            buildTotalDirect = buildTotalDirect + sum(x);
+            % add the count to the according cycle
             buildDirectCnt(buildList(m) - min(buildList) + 1,1) =...
                 buildDirectCnt(buildList(m) - min(buildList) + 1,1) + sum(x);
+            drFilter = drFilter | x;
         end
+        
+        barDirectCycle = bar(cycles, table2array(drCntByCycle(1,:)));
+        % add labels to bar graph
+        xtipsDirectCycle = barDirectCycle(1).XEndPoints;
+        ytipsDirectCycle = barDirectCycle(1).YEndPoints;
+        labelsDirectCycle = string(barDirectCycle(1).YData);
+        text(xtipsDirectCycle,ytipsDirectCycle,labelsDirectCycle,...
+            'HorizontalAlignment','center',...
+            'VerticalAlignment','bottom')
+        ylabel('Total Direct');
+        ylim([0 max(table2array(drCntByCycle(1,:)))*1.2+0.1]);
+        title(strcat(string(buildTotalDirect), ' Total Direct Issues Break Down by Cycles in Build ', string(buildList(m))));
+        saveas(barDirectCycle, strcat(pwd,'\Plots\', 'Total Direct Issues Break Down by Cycles in Build ', string(buildList(m)), '.png'));
+        close(gcf);
+       
+        
+        %%%%% Total Directs Break Down by Hosts in each Build %%%%%
+        drBT = bT(drFilter, :);
+        
+        for n = 1:height(drBT)
+            % find how many times Direct occurs within a row
+            x = sum(contains(table2cell(drBT(n, 22:35)), 'Direct'));
+            % add the count to the according Host 
+            drCntByHost.(char(table2cell(drBT(n,10)))) =...
+                drCntByHost.(char(table2cell(drBT(n,10)))) + x;
+        end
+        
+        drByHost = figure();
+        barDirectHost =  bar(categorical(unique(hm.Host)), table2array(drCntByHost(1,:)));
+        % add labels to bar graph
+        xtipsDirectHost = barDirectHost(1).XEndPoints;
+        ytipsDirectHost = barDirectHost(1).YEndPoints;
+        labelsDirectHost = string(barDirectHost(1).YData);
+        text(xtipsDirectHost,ytipsDirectHost,labelsDirectHost,...
+            'HorizontalAlignment','center',...
+            'VerticalAlignment','bottom')
+        ylabel('Total Direct');
+        ylim([0 max(table2array(drCntByHost(1,:)))*1.2+0.1]);
+        title(strcat(string(buildTotalDirect), ' Total Direct Issues Break Down by Host in Build ', string(buildList(m))));
+        set(drByHost,'position',[0,0,1920,1080]);
+        saveas(barDirectHost, strcat(pwd,'\Plots\', 'Total Direct Issues Break Down by Host in Build ', string(buildList(m)), '.png'));
+        close(gcf);
         
         buildPassCnt(buildList(m) - min(buildList) + 1,1) =...
             buildTotalCnt(buildList(m) - min(buildList) + 1,1) -...
@@ -155,7 +293,7 @@ else
             'VerticalAlignment','bottom')
         xlabel('Failure Type');
         ylabel('Count');
-        ylim([0 max(summaryData)*1.2]);
+        ylim([0 max(summaryData)*1.2+0.1]);
         title(strcat('Build', string(buildList(m)), ' Test Summary'));
         saveas(gcf, strcat(pwd,'\Plots\', 'Build', string(buildList(m)), ' Test Failure Summary.png'));
         close(gcf);
@@ -203,7 +341,7 @@ else
     
     xlabel('Build');
     ylabel('Total Bugs');
-    ylim([0 max(buildSummary, [], 'all')*1.2]);
+    ylim([0 max(buildSummary, [], 'all')*1.2+0.1]);
     title('Test Failure Summary per Build');
     % set position and resolution
     set(sumfig,'position',[0,0,1920,1080]);
@@ -222,7 +360,7 @@ else
         'VerticalAlignment','bottom')
     xlabel('Build');
     ylabel('Total Bugs');
-    ylim([0 max(buildFailCnt)*1.2]);
+    ylim([0 max(buildFailCnt)*1.2+0.1]);
     title('Real Fail Count per Build');
     saveas(gcf, strcat(pwd,'\Plots\','Real Fail Count per Build.png'));
     close(gcf);
@@ -239,7 +377,7 @@ else
         'VerticalAlignment','bottom')
     xlabel('Build');
     ylabel('Total CNR Count');
-    ylim([0 max(buildCNRsCnt)*1.2]);
+    ylim([0 max(buildCNRsCnt)*1.2+0.1]);
     title('CNR Count per Build');
     saveas(gcf, strcat(pwd,'\Plots\','CNR Count per Build.png'));
     close(gcf);
@@ -256,7 +394,7 @@ else
         'VerticalAlignment','bottom')
     xlabel('Build');
     ylabel('Total Cypress Issue');
-    ylim([0 max(buildCypressCnt)*1.2]);
+    ylim([0 max(buildCypressCnt)*1.2+0.1]);
     title('Cypress Issue Count per Build');
     saveas(gcf, strcat(pwd,'\Plots\','Cypress Issue Count per Build.png'));
     close(gcf);
@@ -273,7 +411,7 @@ else
         'VerticalAlignment','bottom')
     xlabel('Build');
     ylabel('Total Direct Issue');
-    ylim([0 max(buildDirectCnt)*1.2]);
+    ylim([0 max(buildDirectCnt)*1.2+0.1]);
     title('Direct Issue Count per Build');
     saveas(gcf, strcat(pwd,'\Plots\','Direct Issue Count per Build.png'));
     close(gcf);

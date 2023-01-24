@@ -5,18 +5,18 @@ Real Fails:
 
 CNRs:
 ** bar plot, CNRs count per build
-* bar plot, CNRs count break down by host, per build
-* bar plot, CNRs count break down by cycle, per build
+** bar plot, CNRs count break down by host, per build
+** bar plot, CNRs count break down by cycle, per build
 
 Cypress:
 ** bar plot, Cypress count per build
-* bar plot, Cypress count break down by host, per build
-* bar plot, Cypress count break down by cycle, per build
+** bar plot, Cypress count break down by host, per build
+** bar plot, Cypress count break down by cycle, per build
 
 Direct Connect:
 ** bar plot, Direct connect issues count per build
-* bar plot, Direct connect count break down by host, per build
-* bar plot, Direct connect count break down by cycle, per build
+** bar plot, Direct connect count break down by host, per build
+** bar plot, Direct connect count break down by cycle, per build
 
 Hosts/DUTs/monitors/switches usage:
 * bar plot DUTs used in test, per build
