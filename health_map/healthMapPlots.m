@@ -12,6 +12,8 @@ else
     healthMap = readtable(strcat(fp,fn), 'Sheet', "Health Map");
     failDev = readtable(strcat(fp,'failDevices.xlsx'), 'Format', 'auto');
     hm = [healthMap, failDev(1:height(healthMap), :)];
+    % TotalBugs is inaccurate and should not be used!
+    hm.TotalBugs(:) = 0;
     
     % define oepration cycle category
     % NOTE: cycle names must be the same as the excel sheet!
@@ -42,12 +44,10 @@ else
     for m = 1:length(buildList)
         buildFilter = hm.Build == buildList(m);
         bT = hm(buildFilter, :); % sub table by build
+        bT.TotalBugs(:) = 0;
         
         % total test count per build
         buildTotalCnt(buildList(m) - min(buildList) + 1,1) = sum(bT.TotalTests);
-        
-        % real fails count per build
-        buildFailCnt(buildList(m) - min(buildList) + 1,1) = sum(bT.TotalBugs);
               
         % create lists for variable types
         varTypesCycle = string(zeros(14,1))';
@@ -55,6 +55,96 @@ else
         varTypesHost = string(zeros(length(unique(hm.Host)),1))';
         varTypesHost(:) = 'double';
         
+        
+         %%%% Real count per build %%%%
+        buildTotalReal = 0;
+        
+        % create Real counter table by cycle
+        RealCntByCycle = table('Size', [1 14],...
+            'VariableTypes',varTypesCycle,...
+            'VariableNames', hm.Properties.VariableNames(22:35));
+        
+        % create Real counter table by host
+        RealCntByHost = table('Size', [1 length(unique(hm.Host))],...
+            'VariableTypes',varTypesHost,...
+            'VariableNames', unique(hm.Host));
+        
+        % create zero array with the same height as the Build table
+        RealFilter = zeros(height(bT),1);
+        
+        %%%%% Total Reals Break Down by Cycles in each Build %%%%%
+        
+        for n = bT.Properties.VariableNames(22:35)
+            % x is a logical array with same height as build table
+%             x = contains(bT.(char(n)), 'Real');
+            cycleResultList = bT.(char(n));
+            cycleRealCnt = 0;
+            % loop through each cells in an operation cycle
+            for x = 1:height(cycleResultList)
+                % split the cell by commas
+                curCell = strtrim(split(cycleResultList{x}, ','));
+                % loop through the elements in the cell
+                for y = 1:length(curCell)
+                    % increment Real counter when a 'Real', 'Fail' or a bug number is found
+                    if contains(curCell{y}, 'Real') ||...
+                            contains(curCell{y}, 'Fail') ||...
+                            ~isempty(str2num(curCell{y}))
+                        cycleRealCnt = cycleRealCnt + 1;
+                        % update Total bugs
+                        bT.TotalBugs(x) = bT.TotalBugs(x) + 1;
+                        % update logical real filter
+                        RealFilter(x) = 1;
+                    end
+                end
+            end
+            RealCntByCycle.(char(n)) = cycleRealCnt;
+            buildTotalReal = buildTotalReal + cycleRealCnt;
+            % add the count to the according cycle
+            buildFailCnt(buildList(m) - min(buildList) + 1,1) =...
+                buildFailCnt(buildList(m) - min(buildList) + 1,1) + cycleRealCnt;
+        end
+        
+        barRealCycle = bar(cycles, table2array(RealCntByCycle(1,:)));
+        % add labels to bar graph
+        xtipsRealCycle = barRealCycle(1).XEndPoints;
+        ytipsRealCycle = barRealCycle(1).YEndPoints;
+        labelsRealCycle = string(barRealCycle(1).YData);
+        text(xtipsRealCycle,ytipsRealCycle,labelsRealCycle,...
+            'HorizontalAlignment','center',...
+            'VerticalAlignment','bottom')
+        ylabel('Total Real Bugs');
+        ylim([0 max(table2array(RealCntByCycle(1,:)))*1.2+0.1]);
+        title(strcat(string(buildTotalReal), ' Total Real Bugs Break Down by Cycles in Build ', string(buildList(m))));
+        saveas(barRealCycle, strcat(pwd,'\Plots\', 'Total Real Bugs Break Down by Cycles in Build ', string(buildList(m)), '.png'));
+        close(gcf);
+       %% =============================== %
+        
+        %%%%% Total Reals Break Down by Hosts in each Build %%%%%
+        RealBT = bT(logical(RealFilter), :);
+        
+        for n = 1:height(RealBT)
+            % add the Total Bugs from each row to the according Host 
+            RealCntByHost.(char(table2cell(RealBT(n,10)))) =...
+                RealCntByHost.(char(table2cell(RealBT(n,10)))) + ...
+                table2array(RealBT(n,20));
+        end
+        
+        RealByHost = figure();
+        barRealHost =  bar(categorical(unique(hm.Host)), table2array(RealCntByHost(1,:)));
+        % add labels to bar graph
+        xtipsRealHost = barRealHost(1).XEndPoints;
+        ytipsRealHost = barRealHost(1).YEndPoints;
+        labelsRealHost = string(barRealHost(1).YData);
+        text(xtipsRealHost,ytipsRealHost,labelsRealHost,...
+            'HorizontalAlignment','center',...
+            'VerticalAlignment','bottom')
+        ylabel('Total Real Bugs');
+        ylim([0 max(table2array(RealCntByHost(1,:)))*1.2+0.1]);
+        title(strcat(string(buildTotalReal), ' Total Real Bugs Break Down by Host in Build ', string(buildList(m))));
+        set(RealByHost,'position',[0,0,1920,1080]);
+        saveas(barRealHost, strcat(pwd,'\Plots\', 'Total Real Bugs Break Down by Host in Build ', string(buildList(m)), '.png'));
+        close(gcf);
+        %% =============================== %
         
         %%%% CNR count per build %%%%
         buildTotalCNR = 0;
@@ -98,7 +188,7 @@ else
         title(strcat(string(buildTotalCNR), ' Total CNRs Break Down by Cycles in Build ', string(buildList(m))));
         saveas(barCNRCycle, strcat(pwd,'\Plots\', 'Total CNRs Break Down by Cycles in Build ', string(buildList(m)), '.png'));
         close(gcf);
-       
+       %% =============================== %
         
         %%%%% Total CNRs Break Down by Hosts in each Build %%%%%
         cnrBT = bT(cnrFilter, :);
@@ -126,7 +216,7 @@ else
         set(cnrByHost,'position',[0,0,1920,1080]);
         saveas(barCNRHost, strcat(pwd,'\Plots\', 'Total CNRs Break Down by Host in Build ', string(buildList(m)), '.png'));
         close(gcf);
-        
+        %% =============================== %
         %%%% Cypress count per build %%%%
         buildTotalCypress = 0;
         
@@ -169,7 +259,7 @@ else
         title(strcat(string(buildTotalCypress), ' Total Cypress Issues Break Down by Cycles in Build ', string(buildList(m))));
         saveas(barCypressCycle, strcat(pwd,'\Plots\', 'Total Cypress Issues Break Down by Cycles in Build ', string(buildList(m)), '.png'));
         close(gcf);
-       
+       %% =============================== %
         
         %%%%% Total Cypress Break Down by Hosts in each Build %%%%%
         cyBT = bT(cyFilter, :);
@@ -197,7 +287,7 @@ else
         set(cyByHost,'position',[0,0,1920,1080]);
         saveas(barCypressHost, strcat(pwd,'\Plots\', 'Total Cypress Issues Break Down by Host in Build ', string(buildList(m)), '.png'));
         close(gcf);
-        
+        %% =============================== %
         %%%% Direct count per build %%%%
         buildTotalDirect = 0;
         
@@ -240,7 +330,7 @@ else
         title(strcat(string(buildTotalDirect), ' Total Direct Issues Break Down by Cycles in Build ', string(buildList(m))));
         saveas(barDirectCycle, strcat(pwd,'\Plots\', 'Total Direct Issues Break Down by Cycles in Build ', string(buildList(m)), '.png'));
         close(gcf);
-       
+       %% =============================== %
         
         %%%%% Total Directs Break Down by Hosts in each Build %%%%%
         drBT = bT(drFilter, :);
@@ -268,7 +358,7 @@ else
         set(drByHost,'position',[0,0,1920,1080]);
         saveas(barDirectHost, strcat(pwd,'\Plots\', 'Total Direct Issues Break Down by Host in Build ', string(buildList(m)), '.png'));
         close(gcf);
-        
+        %% =============================== %
         buildPassCnt(buildList(m) - min(buildList) + 1,1) =...
             buildTotalCnt(buildList(m) - min(buildList) + 1,1) -...
             buildDirectCnt(buildList(m) - min(buildList) + 1,1) -...
@@ -299,8 +389,237 @@ else
         close(gcf);
         %% =============================== %
         
+        % DUTs used in test per Build
         
+        tDUTs = table(vertcat(bT.DUT1, bT.DUT2, bT.DUT3, bT.DUT4));
+        G_tDUTs = groupsummary(tDUTs, 'Var1');
+        % remove the empty DUT denoted by '-'
+        if strcmp(table2cell(G_tDUTs(1,1)), '-')
+            G_tDUTs(1,:) = [];
+        end
         
+        DUTsUsed = figure();
+        barDUTsUsed =  bar(categorical(G_tDUTs.Var1), G_tDUTs.GroupCount);
+        % add labels to bar graph
+        xtipsDUTsUsed = barDUTsUsed(1).XEndPoints;
+        ytipsDUTsUsed = barDUTsUsed(1).YEndPoints;
+        labelsDUTsUsed = string(barDUTsUsed(1).YData);
+        text(xtipsDUTsUsed,ytipsDUTsUsed,labelsDUTsUsed,...
+            'HorizontalAlignment','center',...
+            'VerticalAlignment','bottom')
+        ylabel('DUT Count');
+        if isempty(G_tDUTs.GroupCount)
+            ylim([0 0.1]);
+        else
+            ylim([0 max(G_tDUTs.GroupCount)*1.2+0.1]);
+        end
+        title(strcat('DUTs Used in Build ', string(buildList(m))));
+        set(DUTsUsed,'position',[0,0,1920,1080]);
+        saveas(gcf, strcat(pwd,'\Plots\', 'DUTs Used in Build ', string(buildList(m)), '.png'));
+        close(gcf);
+        %% =============================== %
+        
+        % DUT1 used in test per Build
+        
+        G_DUT1 = groupsummary(bT, 'DUT1');
+        % remove the empty DUT denoted by '-'
+        if strcmp(table2cell(G_DUT1(1,1)), '-')
+            G_DUT1(1,:) = [];
+        end
+        
+        DUT1Used = figure();
+        barDUT1Used =  bar(categorical(G_DUT1.DUT1), G_DUT1.GroupCount);
+        % add labels to bar graph
+        xtipsDUT1Used = barDUT1Used(1).XEndPoints;
+        ytipsDUT1Used = barDUT1Used(1).YEndPoints;
+        labelsDUT1Used = string(barDUT1Used(1).YData);
+        text(xtipsDUT1Used,ytipsDUT1Used,labelsDUT1Used,...
+            'HorizontalAlignment','center',...
+            'VerticalAlignment','bottom')
+        ylabel('DUT Count');
+        if isempty(G_DUT1.GroupCount)
+            ylim([0 0.1]);
+        else
+            ylim([0 max(G_DUT1.GroupCount)*1.2+0.1]);
+        end
+        title(strcat('Port 1 DUT Usage in Build ', string(buildList(m))));
+        set(DUT1Used,'position',[0,0,1920,1080]);
+        saveas(gcf, strcat(pwd,'\Plots\', 'Port 1 DUT Usage in Build ', string(buildList(m)), '.png'));
+        close(gcf);
+        %% =============================== %
+        
+        % DUT2 used in test per Build
+        
+        G_DUT2 = groupsummary(bT, 'DUT2');
+        % remove the empty DUT denoted by '-'
+        if strcmp(table2cell(G_DUT2(1,1)), '-')
+            G_DUT2(1,:) = [];
+        end
+        
+        DUT2Used = figure();
+        barDUT2Used =  bar(categorical(G_DUT2.DUT2), G_DUT2.GroupCount);
+        % add labels to bar graph
+        xtipsDUT2Used = barDUT2Used(1).XEndPoints;
+        ytipsDUT2Used = barDUT2Used(1).YEndPoints;
+        labelsDUT2Used = string(barDUT2Used(1).YData);
+        text(xtipsDUT2Used,ytipsDUT2Used,labelsDUT2Used,...
+            'HorizontalAlignment','center',...
+            'VerticalAlignment','bottom')
+        ylabel('DUT Count');
+        if isempty(G_DUT2.GroupCount)
+            ylim([0 0.1]);
+        else
+            ylim([0 max(G_DUT2.GroupCount)*1.2+0.1]);
+        end
+        title(strcat('Port 2 DUT Usage in Build ', string(buildList(m))));
+        set(DUT2Used,'position',[0,0,1920,1080]);
+        saveas(gcf, strcat(pwd,'\Plots\', 'Port 2 DUT Usage in Build ', string(buildList(m)), '.png'));
+        close(gcf);
+        %% =============================== %
+        
+        % DUT3 used in test per Build
+        
+        G_DUT3 = groupsummary(bT, 'DUT3');
+        % remove the empty DUT denoted by '-'
+        if strcmp(table2cell(G_DUT3(1,1)), '-')
+            G_DUT3(1,:) = [];
+        end
+        
+        DUT3Used = figure();
+        barDUT3Used =  bar(categorical(G_DUT3.DUT3), G_DUT3.GroupCount);
+        % add labels to bar graph
+        xtipsDUT3Used = barDUT3Used(1).XEndPoints;
+        ytipsDUT3Used = barDUT3Used(1).YEndPoints;
+        labelsDUT3Used = string(barDUT3Used(1).YData);
+        text(xtipsDUT3Used,ytipsDUT3Used,labelsDUT3Used,...
+            'HorizontalAlignment','center',...
+            'VerticalAlignment','bottom')
+        ylabel('DUT Count');
+        if isempty(G_DUT3.GroupCount)
+            ylim([0 0.1]);
+        else
+            ylim([0 max(G_DUT3.GroupCount)*1.2+0.1]);
+        end
+        title(strcat('Port 3 DUT Usage in Build ', string(buildList(m))));
+        set(DUT3Used,'position',[0,0,1920,1080]);
+        saveas(gcf, strcat(pwd,'\Plots\', 'Port 3 DUT Usage in Build ', string(buildList(m)), '.png'));
+        close(gcf);
+        %% =============================== %
+        
+        % DUT4 used in test per Build
+        
+        G_DUT4 = groupsummary(bT, 'DUT4');
+        % remove the empty DUT denoted by '-'
+        if strcmp(table2cell(G_DUT4(1,1)), '-')
+            G_DUT4(1,:) = [];
+        end
+        
+        DUT4Used = figure();
+        barDUT4Used =  bar(categorical(G_DUT4.DUT4), G_DUT4.GroupCount);
+        % add labels to bar graph
+        xtipsDUT4Used = barDUT4Used(1).XEndPoints;
+        ytipsDUT4Used = barDUT4Used(1).YEndPoints;
+        labelsDUT4Used = string(barDUT4Used(1).YData);
+        text(xtipsDUT4Used,ytipsDUT4Used,labelsDUT4Used,...
+            'HorizontalAlignment','center',...
+            'VerticalAlignment','bottom')
+        ylabel('DUT Count');
+        if isempty(G_DUT4.GroupCount)
+            ylim([0 0.1]);
+        else
+            ylim([0 max(G_DUT4.GroupCount)*1.2+0.1]);
+        end
+        title(strcat('Port 4 DUT Usage in Build ', string(buildList(m))));
+        set(DUT4Used,'position',[0,0,1920,1080]);
+        saveas(gcf, strcat(pwd,'\Plots\', 'Port 4 DUT Usage in Build ', string(buildList(m)), '.png'));
+        close(gcf);
+        %% =============================== %
+        
+        % Monitor used in test per Build
+        
+        G_monitor = groupsummary(bT, 'Monitor');
+        % remove the empty DUT denoted by '-'
+        if strcmp(table2cell(G_monitor(1,1)), '-')
+            G_monitor(1,:) = [];
+        end
+        
+        monitorUsed = figure();
+        barMonitorUsed =  bar(categorical(G_monitor.Monitor), G_monitor.GroupCount);
+        % add labels to bar graph
+        xtipsMonitorUsed = barMonitorUsed(1).XEndPoints;
+        ytipsMonitorUsed = barMonitorUsed(1).YEndPoints;
+        labelsMonitorUsed = string(barMonitorUsed(1).YData);
+        text(xtipsMonitorUsed,ytipsMonitorUsed,labelsMonitorUsed,...
+            'HorizontalAlignment','center',...
+            'VerticalAlignment','bottom')
+        ylabel('Monitor Count');
+        if isempty(G_monitor.GroupCount)
+            ylim([0 0.1]);
+        else
+            ylim([0 max(G_monitor.GroupCount)*1.2+0.1]);
+        end
+        title(strcat('Monitor Usage in Build ', string(buildList(m))));
+        set(monitorUsed,'position',[0,0,1920,1080]);
+        saveas(gcf, strcat(pwd,'\Plots\', 'Monitor Usage in Build ', string(buildList(m)), '.png'));
+        close(gcf);
+        %% =============================== %
+        
+        % Switch used in test per Build
+        
+        G_switch = groupsummary(bT, 'Switch');
+        % remove the empty DUT denoted by '-'
+        if strcmp(table2cell(G_switch(1,1)), '-')
+            G_switch(1,:) = [];
+        end
+        
+        switchUsed = figure();
+        barSwitchUsed =  bar(categorical(G_switch.Switch), G_switch.GroupCount);
+        % add labels to bar graph
+        xtipsSwitchUsed = barSwitchUsed(1).XEndPoints;
+        ytipsSwitchUsed = barSwitchUsed(1).YEndPoints;
+        labelsSwitchUsed = string(barSwitchUsed(1).YData);
+        text(xtipsSwitchUsed,ytipsSwitchUsed,labelsSwitchUsed,...
+            'HorizontalAlignment','center',...
+            'VerticalAlignment','bottom')
+        ylabel('Switch Count');
+        if isempty(G_switch.GroupCount)
+            ylim([0 0.1]);
+        else
+            ylim([0 max(G_switch.GroupCount)*1.2+0.1]);
+        end
+        title(strcat('Switch Usage in Build ', string(buildList(m))));
+        set(switchUsed,'position',[0,0,1920,1080]);
+        saveas(gcf, strcat(pwd,'\Plots\', 'Switch Usage in Build ', string(buildList(m)), '.png'));
+        close(gcf);
+        %% =============================== %
+        
+        % Host used in test per Build
+        
+        G_Host = groupsummary(bT, 'Host');
+        % remove the empty DUT denoted by '-'
+        if strcmp(table2cell(G_Host(1,1)), '-')
+            G_Host(1,:) = [];
+        end
+        
+        hostUsed = figure();
+        barHostUsed =  bar(categorical(G_Host.Host), G_Host.GroupCount);
+        % add labels to bar graph
+        xtipsHostUsed = barHostUsed(1).XEndPoints;
+        ytipsHostUsed = barHostUsed(1).YEndPoints;
+        labelsHostUsed = string(barHostUsed(1).YData);
+        text(xtipsHostUsed,ytipsHostUsed,labelsHostUsed,...
+            'HorizontalAlignment','center',...
+            'VerticalAlignment','bottom')
+        ylabel('Host Count');
+        if isempty(G_Host.GroupCount)
+            ylim([0 0.1]);
+        else
+            ylim([0 max(G_Host.GroupCount)*1.2+0.1]);
+        end
+        title(strcat('Host Usage in Build ', string(buildList(m))));
+        set(hostUsed,'position',[0,0,1920,1080]);
+        saveas(gcf, strcat(pwd,'\Plots\', 'Host Usage in Build ', string(buildList(m)), '.png'));
+        close(gcf);
     end
 
     
@@ -417,10 +736,7 @@ else
     close(gcf);
     %% =============================== %
     
-    hostFilter = contains(hm.Host, 'Host 1');
-    resultFilter = contains(hm.Result, 'Real');
-    dut1Filter = contains(hm.DUT1, 'Go');
-    basicOpFilter = contains(hm.BasicOp, 'Direct');
+
     
     
     

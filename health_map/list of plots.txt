@@ -19,11 +19,11 @@ Direct Connect:
 ** bar plot, Direct connect count break down by cycle, per build
 
 Hosts/DUTs/monitors/switches usage:
-* bar plot DUTs used in test, per build
-* bar plot, DUTs used in test break down by Port 1, 2, 3, 4, per build
-* bar plot, monitor used in test, per build
-* bar plot, switch used in test, per build
-* bar plot, hosts used in test, per build
+** bar plot, DUTs used in test, per build
+** bar plot, DUTs used in test break down by Port 1, 2, 3, 4, per build
+** bar plot, monitor used in test, per build
+** bar plot, switch used in test, per build
+** bar plot, hosts used in test, per build
 
 Summary:
 ** grouped bar plot, distribudion of Direct, CNR, Cypress, and Real fails, per build
