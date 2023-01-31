@@ -32,10 +32,10 @@ Summary:
 =================
 Plots that require checking the red cell/failing devices in health map:
 
-* bar plot, fail counts in Port 1,2,3,4, per build
+** bar plot, fail counts in Port 1,2,3,4, per build
 This tells if different ports perform differently.
 
-* bar plot, total bugs for individual cycle, for all Builds
+* bar plot, total bug count for individual cycle, for all Builds
 This tells how extenders perfrom when handling different cycles.
 
 * bar plot, Hosts with most fails per Build
