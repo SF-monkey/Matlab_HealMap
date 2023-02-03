@@ -40,6 +40,17 @@ else
     summaryLabel = categorical({'Real', 'CNR', 'Cypress','Direct'});
     summaryLabel = reordercats(summaryLabel, {'Real', 'CNR', 'Cypress','Direct'});
 
+
+    % create lists for variable types
+    varTypesCycle = string(zeros(14,1))';
+    varTypesCycle(:) = 'double';
+    varTypesHost = string(zeros(length(unique(hm.Host)),1))';
+    varTypesHost(:) = 'double';
+    
+    % Fail count table for each cycle per build
+    masterRealCntByCycle = table('Size', [length(buildList) 15],...
+        'VariableTypes',['double', varTypesCycle],...
+        'VariableNames', ['Build', hm.Properties.VariableNames(22:35)]);
     
     % loop through different builds
     for m = 1:length(buildList)
@@ -49,19 +60,7 @@ else
         
         % total test count per build
         buildTotalCnt(buildList(m) - min(buildList) + 1,1) = sum(bT.TotalTests);
-              
-        % create lists for variable types
-        varTypesCycle = string(zeros(14,1))';
-        varTypesCycle(:) = 'double';
-        varTypesHost = string(zeros(length(unique(hm.Host)),1))';
-        varTypesHost(:) = 'double';
-        
-        % Fail count table for each cycle per build
-        masterRealCntByCycle = table('Size', [length(buildList) 15],...
-            'VariableTypes',['double', varTypesCycle],...
-            'VariableNames', ['Build', hm.Properties.VariableNames(22:35)]);
-        
-        
+    
          %%%% Real count per build %%%%
         buildTotalReal = 0;
         
@@ -771,11 +770,11 @@ else
     end
     
     % create a list with the fail count in each port
-    fDUTsPortStat = [sum(G_fail_DUT1.GroupCount), sum(G_fail_DUT2.GroupCount),...
+    failDUTsPortStat = [sum(G_fail_DUT1.GroupCount), sum(G_fail_DUT2.GroupCount),...
         sum(G_fail_DUT3.GroupCount), sum(G_fail_DUT4.GroupCount)];
     
     failDUTsPortStats = figure();
-    barfailDUTsPortStats =  bar(categorical({'Port 1';'Port 2';'Port 3';'Port 4'}), fDUTsPortStat);
+    barfailDUTsPortStats =  bar(categorical({'Port 1';'Port 2';'Port 3';'Port 4'}), failDUTsPortStat);
     % add labels to bar graph
     xtipsfailDUTsPortStats = barfailDUTsPortStats(1).XEndPoints;
     ytipsfailDUTsPortStats = barfailDUTsPortStats(1).YEndPoints;
@@ -784,10 +783,10 @@ else
         'HorizontalAlignment','center',...
         'VerticalAlignment','bottom')
     ylabel('Fail Count');
-    if ~any(fDUTsPortStat) % check if the list is not all zeros
+    if ~any(failDUTsPortStat) % check if the list is not all zeros
         ylim([0 0.1]);
     else
-        ylim([0 max(fDUTsPortStat)*1.2]);
+        ylim([0 max(failDUTsPortStat)*1.2]);
     end
     title(strcat('Fail Count in each Port in Build ', string(buildList(m))));
     saveas(gcf, strcat(pwd,'\Plots\', 'Fail Count in each Port in Build ', string(buildList(m)), '.png'));
@@ -795,8 +794,26 @@ else
     %% =============================== %
     
     % Total bug count for individual cycle, per Builds
-    bar(categorical(buildList), masterRealCntByCycle.BasicOp);
-    
+    for n = masterRealCntByCycle.Properties.VariableNames(2:15)
+        figure();
+        barBugCntByCycle = bar(categorical(buildList), masterRealCntByCycle.(char(n)));
+        curXTips = barBugCntByCycle(1).XEndPoints;
+        curYTips = barBugCntByCycle(1).YEndPoints;
+        curlabels = string(barBugCntByCycle(1).YData);
+        text(curXTips,curYTips,curlabels,...
+            'HorizontalAlignment','center',...
+            'VerticalAlignment','bottom')
+        xlabel('Build');
+        ylabel('Fail Count');
+        if ~any(masterRealCntByCycle.(char(n))) % check if the list is not all zeros
+            ylim([0 0.1]);
+        else
+            ylim([0 max(masterRealCntByCycle.(char(n)))*1.2]);
+        end
+        title(['Fail Count in ', char(n), ' Cycle in each Build']);
+        saveas(gcf, [pwd,'\Plots\', 'Fail Count in ', char(n), ' Cycle in each Build', '.png']);
+        close(gcf);
+    end
     
     
 end
