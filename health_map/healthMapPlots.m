@@ -7,6 +7,13 @@ if index == 0
     disp('No file selected!');
 else
     
+    mkdir Plots
+    mkdir Plots\Real
+    mkdir Plots\CNR
+    mkdir Plots\Direct
+    mkdir Plots\Cypress
+    mkdir Plots\Usage
+    
     % load the table
     % must run the 'color_test.m' once if health map file is updated.
     healthMap = readtable(strcat(fp,fn), 'Sheet', "Health Map");
@@ -125,7 +132,7 @@ else
         ylabel('Total Real Bugs');
         ylim([0 max(table2array(RealCntByCycle(1,:)))*1.2+0.1]);
         title(strcat(string(buildTotalReal), ' Total Real Bugs Break Down by Cycles in Build ', string(buildList(m))));
-        saveas(barRealCycle, strcat(pwd,'\Plots\', 'Total Real Bugs Break Down by Cycles in Build ', string(buildList(m)), '.png'));
+        saveas(barRealCycle, strcat(pwd,'\Plots\Real\', 'Total Real Bugs Break Down by Cycles in Build ', string(buildList(m)), '.png'));
         close(gcf);
        %% =============================== %
         
@@ -152,7 +159,7 @@ else
         ylim([0 max(table2array(RealCntByHost(1,:)))*1.2+0.1]);
         title(strcat(string(buildTotalReal), ' Total Real Bugs Break Down by Host in Build ', string(buildList(m))));
         set(RealByHost,'position',[0,0,1920,1080]);
-        saveas(barRealHost, strcat(pwd,'\Plots\', 'Total Real Bugs Break Down by Host in Build ', string(buildList(m)), '.png'));
+        saveas(barRealHost, strcat(pwd,'\Plots\Real\', 'Total Real Bugs Break Down by Host in Build ', string(buildList(m)), '.png'));
         close(gcf);
         %% =============================== %
         
@@ -196,7 +203,7 @@ else
         ylabel('Total CNRs');
         ylim([0 max(table2array(cnrCntByCycle(1,:)))*1.2+0.1]);
         title(strcat(string(buildTotalCNR), ' Total CNRs Break Down by Cycles in Build ', string(buildList(m))));
-        saveas(barCNRCycle, strcat(pwd,'\Plots\', 'Total CNRs Break Down by Cycles in Build ', string(buildList(m)), '.png'));
+        saveas(barCNRCycle, strcat(pwd,'\Plots\CNR\', 'Total CNRs Break Down by Cycles in Build ', string(buildList(m)), '.png'));
         close(gcf);
        %% =============================== %
         
@@ -224,7 +231,7 @@ else
         ylim([0 max(table2array(cnrCntByHost(1,:)))*1.2+0.1]);
         title(strcat(string(buildTotalCNR), ' Total CNRs Break Down by Host in Build ', string(buildList(m))));
         set(cnrByHost,'position',[0,0,1920,1080]);
-        saveas(barCNRHost, strcat(pwd,'\Plots\', 'Total CNRs Break Down by Host in Build ', string(buildList(m)), '.png'));
+        saveas(barCNRHost, strcat(pwd,'\Plots\CNR\', 'Total CNRs Break Down by Host in Build ', string(buildList(m)), '.png'));
         close(gcf);
         %% =============================== %
         %%%% Cypress count per build %%%%
@@ -267,7 +274,7 @@ else
         ylabel('Total Cypress');
         ylim([0 max(table2array(cyCntByCycle(1,:)))*1.2+0.1]);
         title(strcat(string(buildTotalCypress), ' Total Cypress Issues Break Down by Cycles in Build ', string(buildList(m))));
-        saveas(barCypressCycle, strcat(pwd,'\Plots\', 'Total Cypress Issues Break Down by Cycles in Build ', string(buildList(m)), '.png'));
+        saveas(barCypressCycle, strcat(pwd,'\Plots\Cypress\', 'Total Cypress Issues Break Down by Cycles in Build ', string(buildList(m)), '.png'));
         close(gcf);
        %% =============================== %
         
@@ -295,7 +302,7 @@ else
         ylim([0 max(table2array(cyCntByHost(1,:)))*1.2+0.1]);
         title(strcat(string(buildTotalCypress), ' Total Cypress Issues Break Down by Host in Build ', string(buildList(m))));
         set(cyByHost,'position',[0,0,1920,1080]);
-        saveas(barCypressHost, strcat(pwd,'\Plots\', 'Total Cypress Issues Break Down by Host in Build ', string(buildList(m)), '.png'));
+        saveas(barCypressHost, strcat(pwd,'\Plots\Cypress\', 'Total Cypress Issues Break Down by Host in Build ', string(buildList(m)), '.png'));
         close(gcf);
         %% =============================== %
         %%%% Direct count per build %%%%
@@ -338,7 +345,7 @@ else
         ylabel('Total Direct');
         ylim([0 max(table2array(drCntByCycle(1,:)))*1.2+0.1]);
         title(strcat(string(buildTotalDirect), ' Total Direct Issues Break Down by Cycles in Build ', string(buildList(m))));
-        saveas(barDirectCycle, strcat(pwd,'\Plots\', 'Total Direct Issues Break Down by Cycles in Build ', string(buildList(m)), '.png'));
+        saveas(barDirectCycle, strcat(pwd,'\Plots\Direct\', 'Total Direct Issues Break Down by Cycles in Build ', string(buildList(m)), '.png'));
         close(gcf);
        %% =============================== %
         
@@ -366,7 +373,7 @@ else
         ylim([0 max(table2array(drCntByHost(1,:)))*1.2+0.1]);
         title(strcat(string(buildTotalDirect), ' Total Direct Issues Break Down by Host in Build ', string(buildList(m))));
         set(drByHost,'position',[0,0,1920,1080]);
-        saveas(barDirectHost, strcat(pwd,'\Plots\', 'Total Direct Issues Break Down by Host in Build ', string(buildList(m)), '.png'));
+        saveas(barDirectHost, strcat(pwd,'\Plots\Direct\', 'Total Direct Issues Break Down by Host in Build ', string(buildList(m)), '.png'));
         close(gcf);
         %% =============================== %
         buildPassCnt(buildList(m) - min(buildList) + 1,1) =...
@@ -425,7 +432,7 @@ else
         end
         title(strcat('DUTs Used in Build ', string(buildList(m))));
         set(DUTsUsed,'position',[0,0,1920,1080]);
-        saveas(gcf, strcat(pwd,'\Plots\', 'DUTs Used in Build ', string(buildList(m)), '.png'));
+        saveas(gcf, strcat(pwd,'\Plots\Usage\', 'DUTs Used in Build ', string(buildList(m)), '.png'));
         close(gcf);
         %% =============================== %
         
@@ -454,7 +461,7 @@ else
         end
         title(strcat('Port 1 DUT Usage in Build ', string(buildList(m))));
         set(DUT1Used,'position',[0,0,1920,1080]);
-        saveas(gcf, strcat(pwd,'\Plots\', 'Port 1 DUT Usage in Build ', string(buildList(m)), '.png'));
+        saveas(gcf, strcat(pwd,'\Plots\Usage\', 'Port 1 DUT Usage in Build ', string(buildList(m)), '.png'));
         close(gcf);
         %% =============================== %
         
@@ -483,7 +490,7 @@ else
         end
         title(strcat('Port 2 DUT Usage in Build ', string(buildList(m))));
         set(DUT2Used,'position',[0,0,1920,1080]);
-        saveas(gcf, strcat(pwd,'\Plots\', 'Port 2 DUT Usage in Build ', string(buildList(m)), '.png'));
+        saveas(gcf, strcat(pwd,'\Plots\Usage\', 'Port 2 DUT Usage in Build ', string(buildList(m)), '.png'));
         close(gcf);
         %% =============================== %
         
@@ -512,7 +519,7 @@ else
         end
         title(strcat('Port 3 DUT Usage in Build ', string(buildList(m))));
         set(DUT3Used,'position',[0,0,1920,1080]);
-        saveas(gcf, strcat(pwd,'\Plots\', 'Port 3 DUT Usage in Build ', string(buildList(m)), '.png'));
+        saveas(gcf, strcat(pwd,'\Plots\Usage\', 'Port 3 DUT Usage in Build ', string(buildList(m)), '.png'));
         close(gcf);
         %% =============================== %
         
@@ -541,7 +548,7 @@ else
         end
         title(strcat('Port 4 DUT Usage in Build ', string(buildList(m))));
         set(DUT4Used,'position',[0,0,1920,1080]);
-        saveas(gcf, strcat(pwd,'\Plots\', 'Port 4 DUT Usage in Build ', string(buildList(m)), '.png'));
+        saveas(gcf, strcat(pwd,'\Plots\Usage\', 'Port 4 DUT Usage in Build ', string(buildList(m)), '.png'));
         close(gcf);
         %% =============================== %
         
@@ -570,7 +577,7 @@ else
         end
         title(strcat('Monitor Usage in Build ', string(buildList(m))));
         set(monitorUsed,'position',[0,0,1920,1080]);
-        saveas(gcf, strcat(pwd,'\Plots\', 'Monitor Usage in Build ', string(buildList(m)), '.png'));
+        saveas(gcf, strcat(pwd,'\Plots\Usage\', 'Monitor Usage in Build ', string(buildList(m)), '.png'));
         close(gcf);
         %% =============================== %
         
@@ -599,7 +606,7 @@ else
         end
         title(strcat('Switch Usage in Build ', string(buildList(m))));
         set(switchUsed,'position',[0,0,1920,1080]);
-        saveas(gcf, strcat(pwd,'\Plots\', 'Switch Usage in Build ', string(buildList(m)), '.png'));
+        saveas(gcf, strcat(pwd,'\Plots\Usage\', 'Switch Usage in Build ', string(buildList(m)), '.png'));
         close(gcf);
         %% =============================== %
         
@@ -628,9 +635,203 @@ else
         end
         title(strcat('Host Usage in Build ', string(buildList(m))));
         set(hostUsed,'position',[0,0,1920,1080]);
-        saveas(gcf, strcat(pwd,'\Plots\', 'Host Usage in Build ', string(buildList(m)), '.png'));
+        saveas(gcf, strcat(pwd,'\Plots\Usage\', 'Host Usage in Build ', string(buildList(m)), '.png'));
         close(gcf);
+        %% =============================== %
+        
+        % Fail counts in Port 1,2,3,4 per build
+        
+        G_fail_DUT1 = groupsummary(bT, 'fail_DUT1');
+        G_fail_DUT2 = groupsummary(bT, 'fail_DUT2');
+        G_fail_DUT3 = groupsummary(bT, 'fail_DUT3');
+        G_fail_DUT4 = groupsummary(bT, 'fail_DUT4');
+        % remove the empty DUT denoted by '0'
+        if strcmp(table2cell(G_fail_DUT1(1,1)), '0')
+            G_fail_DUT1(1,:) = [];
+        end
+        
+        if strcmp(table2cell(G_fail_DUT2(1,1)), '0')
+            G_fail_DUT2(1,:) = [];
+        end
+        
+        if strcmp(table2cell(G_fail_DUT3(1,1)), '0')
+            G_fail_DUT3(1,:) = [];
+        end
+        
+        if strcmp(table2cell(G_fail_DUT4(1,1)), '0')
+            G_fail_DUT4(1,:) = [];
+        end
+        
+        % create a list with the fail count in each port
+        failDUTsPortStat = [sum(G_fail_DUT1.GroupCount), sum(G_fail_DUT2.GroupCount),...
+            sum(G_fail_DUT3.GroupCount), sum(G_fail_DUT4.GroupCount)];
+        
+        failDUTsPortStats = figure();
+        barfailDUTsPortStats =  bar(categorical({'Port 1';'Port 2';'Port 3';'Port 4'}), failDUTsPortStat);
+        % add labels to bar graph
+        xtipsfailDUTsPortStats = barfailDUTsPortStats(1).XEndPoints;
+        ytipsfailDUTsPortStats = barfailDUTsPortStats(1).YEndPoints;
+        labelsfailDUTsPortStats = string(barfailDUTsPortStats(1).YData);
+        text(xtipsfailDUTsPortStats,ytipsfailDUTsPortStats,labelsfailDUTsPortStats,...
+            'HorizontalAlignment','center',...
+            'VerticalAlignment','bottom')
+        ylabel('Fail Count');
+        if ~any(failDUTsPortStat) % check if the list is not all zeros
+            ylim([0 0.1]);
+        else
+            ylim([0 max(failDUTsPortStat)*1.2]);
+        end
+        title(strcat('Fail Count in each Port in Build ', string(buildList(m))));
+        saveas(gcf, strcat(pwd,'\Plots\Real\', 'Fail Count in each Port in Build ', string(buildList(m)), '.png'));
+        close(gcf);
+        %% =============================== %
+        
+        % monitor with fails count per Build
+        
+        G_fail_monitor = groupsummary(RealBT, 'fail_Monitor');
+        % remove the empty Monitor denoted by '0'
+        if strcmp(table2cell(G_fail_monitor(1,1)), '0')
+            G_fail_monitor(1,:) = [];
+        end
+        
+        if isempty(G_fail_monitor)
+            bar(0,0);
+            title(strcat('No Monitor Fail in Build ', string(buildList(m))));
+            saveas(gcf, strcat(pwd,'\Plots\Real\', 'No Monitor Fail in Build ', string(buildList(m)), '.png'));
+            close(gcf);
+        else
+            failMonitorStat = figure();
+            barfailMonitorStat = bar(categorical(G_fail_monitor.fail_Monitor), G_fail_monitor.GroupCount);
+            % add labels to bar graph
+            xtipsfailMonitorStat = barfailMonitorStat(1).XEndPoints;
+            ytipsfailMonitorStat = barfailMonitorStat(1).YEndPoints;
+            labelsfailMonitorStat = string(barfailMonitorStat(1).YData);
+            text(xtipsfailMonitorStat,ytipsfailMonitorStat,labelsfailMonitorStat,...
+                'HorizontalAlignment','center',...
+                'VerticalAlignment','bottom')
+            ylabel('Fail Count');
+            ylim([0 max(G_fail_monitor.GroupCount)*1.2]);
+            title(strcat('Fail Monitor in Build ', string(buildList(m))));
+            saveas(gcf, strcat(pwd,'\Plots\Real\', 'Fail Monitor in Build ', string(buildList(m)), '.png'));
+            close(gcf);
+        end
+        %% =============================== %
+                
+        % Ethernet Side Channel with fails count per Build
+        
+        G_fail_EthernetSideChannel = groupsummary(RealBT, 'fail_EthernetSideChannel');
+        % remove the empty Monitor denoted by '0'
+        if strcmp(table2cell(G_fail_EthernetSideChannel(1,1)), '0')
+            G_fail_EthernetSideChannel(1,:) = [];
+        end
+        
+        if isempty(G_fail_EthernetSideChannel)
+            bar(0,0);
+            title(strcat('No Side Channel Fail in Build ', string(buildList(m))));
+            saveas(gcf, strcat(pwd,'\Plots\Real\', 'No Side Channel Fail in Build ', string(buildList(m)), '.png'));
+            close(gcf);
+        else
+            failSideChannelStat = figure();
+            barfailSideChannelStat = bar(categorical(G_fail_EthernetSideChannel.fail_EthernetSideChannel), G_fail_EthernetSideChannel.GroupCount);
+            % add labels to bar graph
+            xtipsfailSideChannelStat = barfailSideChannelStat(1).XEndPoints;
+            ytipsfailSideChannelStat = barfailSideChannelStat(1).YEndPoints;
+            labelsfailSideChannelStat = string(barfailSideChannelStat(1).YData);
+            text(xtipsfailSideChannelStat,ytipsfailSideChannelStat,labelsfailSideChannelStat,...
+                'HorizontalAlignment','center',...
+                'VerticalAlignment','bottom')
+            ylabel('Fail Count');
+            ylim([0 max(G_fail_EthernetSideChannel.GroupCount)*1.2]);
+            title(strcat('Fail Ethernet Side Channel in Build ', string(buildList(m))));
+            saveas(gcf, strcat(pwd,'\Plots\Real\', 'Fail Ethernet Side Channel in Build ', string(buildList(m)), '.png'));
+            close(gcf);
+        end
+        %% =============================== %
+        
+        % RS232 with fails count per Build
+        
+        G_fail_RS232 = groupsummary(RealBT, 'fail_RS232');
+        % remove the empty Monitor denoted by '0'
+        if G_fail_RS232{1,1} == 0
+            G_fail_RS232(1,:) = [];
+        end
+        
+        if isempty(G_fail_RS232)
+            bar(0,0);
+            title(strcat('No RS232 Fail in Build ', string(buildList(m))));
+            saveas(gcf, strcat(pwd,'\Plots\Real\', 'No RS232 Fail in Build ', string(buildList(m)), '.png'));
+            close(gcf);
+        else
+            failRS232Stat = figure();
+            barfailRS232Stat = bar(categorical(G_fail_RS232.fail_RS232), G_fail_RS232.GroupCount);
+            % add labels to bar graph
+            xtipsfailRS232Stat = barfailRS232Stat(1).XEndPoints;
+            ytipsfailRS232Stat = barfailRS232Stat(1).YEndPoints;
+            labelsfailRS232Stat = string(barfailRS232Stat(1).YData);
+            text(xtipsfailRS232Stat,ytipsfailRS232Stat,labelsfailRS232Stat,...
+                'HorizontalAlignment','center',...
+                'VerticalAlignment','bottom')
+            ylabel('Fail Count');
+            ylim([0 max(G_fail_RS232.GroupCount)*1.2]);
+            title(strcat('Fail RS232 in Build ', string(buildList(m))));
+            saveas(gcf, strcat(pwd,'\Plots\Real\', 'Fail RS232 in Build ', string(buildList(m)), '.png'));
+            close(gcf);
+        end
+        %% =============================== %
+        
+        % DUTs with fails count per Build
+        
+        % verticlly merge DUT 1,2,3,4 tables
+        if isempty(G_fail_DUT1)
+            G_fail_DUT1 = table('Size', [0,2], 'VariableNames',{'DUTs','GroupCount'}, 'VariableTypes', {'string', 'double'});
+        else
+            G_fail_DUT1 = renamevars(G_fail_DUT1, {'fail_DUT1', 'GroupCount'}, {'DUTs', 'GroupCount'});
+        end
+        if isempty(G_fail_DUT2)
+            G_fail_DUT2 = table('Size', [0,2], 'VariableNames',{'DUTs','GroupCount'}, 'VariableTypes', {'string', 'double'});
+        else
+            G_fail_DUT2 = renamevars(G_fail_DUT2, {'fail_DUT2', 'GroupCount'}, {'DUTs', 'GroupCount'});
+        end
+        if isempty(G_fail_DUT3)
+            G_fail_DUT3 = table('Size', [0,2], 'VariableNames',{'DUTs','GroupCount'}, 'VariableTypes', {'string', 'double'});
+        else
+            G_fail_DUT3 = renamevars(G_fail_DUT3, {'fail_DUT3', 'GroupCount'}, {'DUTs', 'GroupCount'});
+        end
+        if isempty(G_fail_DUT4)
+            G_fail_DUT4 = table('Size', [0,2], 'VariableNames',{'DUTs','GroupCount'}, 'VariableTypes', {'string', 'double'});
+        else
+            G_fail_DUT4 = renamevars(G_fail_DUT4, {'fail_DUT4', 'GroupCount'}, {'DUTs', 'GroupCount'});
+        end
+        G_fail_DUTs = vertcat(G_fail_DUT1, G_fail_DUT2, G_fail_DUT3, G_fail_DUT4);
+        
+        % group summary again
+        G_fail_DUTs = groupsummary(G_fail_DUTs, 'DUTs', 'sum');
+        
+        if isempty(G_fail_DUTs)
+            bar(0,0);
+            title(strcat('No DUT Fail in Build ', string(buildList(m))));
+            saveas(gcf, strcat(pwd,'\Plots\Real\', 'No DUT Fail in Build ', string(buildList(m)), '.png'));
+            close(gcf);
+        else
+            failDUTsStat = figure();
+            barfailDUTsStat = bar(categorical(G_fail_DUTs.DUTs), G_fail_DUTs.sum_GroupCount);
+            % add labels to bar graph
+            xtipsfailDUTsStat = barfailDUTsStat(1).XEndPoints;
+            ytipsfailDUTsStat = barfailDUTsStat(1).YEndPoints;
+            labelsfailDUTsStat = string(barfailDUTsStat(1).YData);
+            text(xtipsfailDUTsStat,ytipsfailDUTsStat,labelsfailDUTsStat,...
+                'HorizontalAlignment','center',...
+                'VerticalAlignment','bottom')
+            ylabel('Fail Count');
+            ylim([0 max(G_fail_DUTs.sum_GroupCount)*1.2]);
+            title(strcat('Fail DUTs in Build ', string(buildList(m))));
+            set(failDUTsStat,'position',[0,0,1920,1080]);
+            saveas(failDUTsStat, strcat(pwd,'\Plots\Real\', 'Fail DUTs in Build ', string(buildList(m)), '.png'));
+            close(failDUTsStat);
+        end
+        
     end
+
 
     
     % grouped build failure summary
@@ -744,53 +945,7 @@ else
     title('Direct Issue Count per Build');
     saveas(gcf, strcat(pwd,'\Plots\','Direct Issue Count per Build.png'));
     close(gcf);
-    %% =============================== %
-    
-    % Fail counts in Port 1,2,3,4 per build
 
-    G_fail_DUT1 = groupsummary(bT, 'fail_DUT1');
-    G_fail_DUT2 = groupsummary(bT, 'fail_DUT2');
-    G_fail_DUT3 = groupsummary(bT, 'fail_DUT3');
-    G_fail_DUT4 = groupsummary(bT, 'fail_DUT4');
-    % remove the empty DUT denoted by '0'
-    if strcmp(table2cell(G_fail_DUT1(1,1)), '0')
-        G_fail_DUT1(1,:) = [];
-    end
-    
-    if strcmp(table2cell(G_fail_DUT2(1,1)), '0')
-        G_fail_DUT2(1,:) = [];
-    end
-    
-    if strcmp(table2cell(G_fail_DUT3(1,1)), '0')
-        G_fail_DUT3(1,:) = [];
-    end
-    
-    if strcmp(table2cell(G_fail_DUT4(1,1)), '0')
-        G_fail_DUT4(1,:) = [];
-    end
-    
-    % create a list with the fail count in each port
-    failDUTsPortStat = [sum(G_fail_DUT1.GroupCount), sum(G_fail_DUT2.GroupCount),...
-        sum(G_fail_DUT3.GroupCount), sum(G_fail_DUT4.GroupCount)];
-    
-    failDUTsPortStats = figure();
-    barfailDUTsPortStats =  bar(categorical({'Port 1';'Port 2';'Port 3';'Port 4'}), failDUTsPortStat);
-    % add labels to bar graph
-    xtipsfailDUTsPortStats = barfailDUTsPortStats(1).XEndPoints;
-    ytipsfailDUTsPortStats = barfailDUTsPortStats(1).YEndPoints;
-    labelsfailDUTsPortStats = string(barfailDUTsPortStats(1).YData);
-    text(xtipsfailDUTsPortStats,ytipsfailDUTsPortStats,labelsfailDUTsPortStats,...
-        'HorizontalAlignment','center',...
-        'VerticalAlignment','bottom')
-    ylabel('Fail Count');
-    if ~any(failDUTsPortStat) % check if the list is not all zeros
-        ylim([0 0.1]);
-    else
-        ylim([0 max(failDUTsPortStat)*1.2]);
-    end
-    title(strcat('Fail Count in each Port in Build ', string(buildList(m))));
-    saveas(gcf, strcat(pwd,'\Plots\', 'Fail Count in each Port in Build ', string(buildList(m)), '.png'));
-    close(gcf);
     %% =============================== %
     
     % Total bug count for individual cycle, per Builds
@@ -814,6 +969,7 @@ else
         saveas(gcf, [pwd,'\Plots\', 'Fail Count in ', char(n), ' Cycle in each Build', '.png']);
         close(gcf);
     end
+    %% =============================== %
     
     
 end

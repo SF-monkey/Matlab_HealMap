@@ -38,9 +38,10 @@ This tells if different ports perform differently.
 ** bar plot, total bug count for individual cycle, for all Builds
 This tells how extenders perfrom when handling different cycles.
 
-* bar plot, Hosts with most fails per Build
-* bar plot, failing DUTs break down by cycles, per Build
-* bar plot, monitor with most fails per Build
-* bar plot, DUTs with most fails per Build
-* bar plot, Ethernet Side Channel fail counts, per build
-* bar plot, RS232 fail counts, per build
+x* bar plot, Hosts fails count per Build. (Duplicate of Real Bugs by Host per Build)
+x* bar plot, failing DUTs break down by cycles, per Build.
+(Not enough info from the table, when multiple devices causes multiple fails in a test, lack of info regarding which device is reponseble for which fails.)
+** bar plot, monitor with fails count per Build
+** bar plot, DUTs with fails count per Build
+** bar plot, Ethernet Side Channel fail counts, per build
+** bar plot, RS232 fail counts, per build
