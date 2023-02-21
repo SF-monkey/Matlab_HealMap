@@ -966,7 +966,7 @@ else
             ylim([0 max(masterRealCntByCycle.(char(n)))*1.2]);
         end
         title(['Fail Count in ', char(n), ' Cycle in each Build']);
-        saveas(gcf, [pwd,'\Plots\', 'Fail Count in ', char(n), ' Cycle in each Build', '.png']);
+        saveas(gcf, [pwd,'\Plots\Real\', 'Fail Count in ', char(n), ' Cycle in each Build', '.png']);
         close(gcf);
     end
     %% =============================== %
