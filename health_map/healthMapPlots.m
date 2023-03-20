@@ -22,8 +22,7 @@ else
     % TotalBugs is inaccurate and should not be used!
     hm.TotalBugs(:) = 0;
     
-    % define oepration cycle category
-    % NOTE: cycle names must be the same as the excel sheet!
+    % define oepration cycle category, same as the health map
     cycles = categorical({'BasicOp','DPAudio','LEXUSB','LEXPwr',...
         'Link', 'REXPwr', 'REXDevice', 'LEXDP',...
         'REXDP', 'Standby', 'Restart', 'Shutdown',...
@@ -38,12 +37,11 @@ else
     
     %% Real fail/CNRs/Cypress/Direct count per build
     
-    buildFailCnt = zeros(length(buildList),1);
-    buildCNRsCnt = zeros(length(buildList),1);
-    buildCypressCnt = zeros(length(buildList),1);
-    buildDirectCnt = zeros(length(buildList),1);
-    buildTotalCnt = zeros(length(buildList),1);
-    buildPassCnt = zeros(length(buildList),1);
+    % 
+    [buildFailCnt, buildCNRsCnt, buildCypressCnt, ...
+     buildDirectCnt, buildTotalCnt, buildPassCnt] = ...
+        deal(zeros(length(buildList),1));
+
     summaryLabel = categorical({'Real', 'CNR', 'Cypress','Direct'});
     summaryLabel = reordercats(summaryLabel, {'Real', 'CNR', 'Cypress','Direct'});
 
@@ -59,7 +57,7 @@ else
         'VariableTypes',['double', varTypesCycle],...
         'VariableNames', ['Build', hm.Properties.VariableNames(22:35)]);
     
-    % loop through different builds
+    % loop through every builds
     for m = 1:length(buildList)
         buildFilter = hm.Build == buildList(m);
         bT = hm(buildFilter, :); % sub table by build
@@ -375,7 +373,9 @@ else
         set(drByHost,'position',[0,0,1920,1080]);
         saveas(barDirectHost, strcat(pwd,'\Plots\Direct\', 'Total Direct Issues Break Down by Host in Build ', string(buildList(m)), '.png'));
         close(gcf);
-        %% =============================== %
+        %% =============================== %        
+        curBuildTotalTest = buildTotalCnt(buildList(m) - min(buildList) + 1,1);
+        
         buildPassCnt(buildList(m) - min(buildList) + 1,1) =...
             buildTotalCnt(buildList(m) - min(buildList) + 1,1) -...
             buildDirectCnt(buildList(m) - min(buildList) + 1,1) -...
@@ -390,7 +390,14 @@ else
             buildCypressCnt(buildList(m) - min(buildList) + 1,1) ...
             buildDirectCnt(buildList(m) - min(buildList) + 1,1)];
         
-        summaryBar = bar(summaryLabel, summaryData);
+        summaryBar = bar(summaryLabel, summaryData, 'facecolor', 'flat');
+        
+        % set bar color
+        summaryBar.CData = [0 114 189;
+                            217 83 25;
+                            237 177 32;
+                            126 47 142] / 255;
+        
         % add labels to bar graph
         xtipsSummary = summaryBar(1).XEndPoints;
         ytipsSummary = summaryBar(1).YEndPoints;
@@ -401,9 +408,41 @@ else
         xlabel('Failure Type');
         ylabel('Count');
         ylim([0 max(summaryData)*1.2+0.1]);
-        title(strcat('Build', string(buildList(m)), ' Test Summary'));
-        saveas(gcf, strcat(pwd,'\Plots\', 'Build', string(buildList(m)), ' Test Failure Summary.png'));
+        t_summary = ['Build', string(buildList(m)), ' Test Summary - ',...
+             buildTotalCnt(buildList(m) - min(buildList) + 1,1), ' Total Tests'];
+        title(join(t_summary,''));
+        saveas(gcf, join([pwd,'\Plots\', t_summary, '.png'],''));
         close(gcf);
+        % ==================== %
+        
+        % Test failure summary plot per build on percentage
+        summaryDataPercent = summaryData/curBuildTotalTest * 100;
+        
+        summaryPCBar = bar(summaryLabel, summaryDataPercent, 'facecolor', 'flat');
+        
+        % set bar color
+        summaryPCBar.CData = [0 114 189;
+                              217 83 25;
+                              237 177 32;
+                              126 47 142] / 255;
+        
+        % add labels to bar graph
+        xtipsSummaryPC = summaryPCBar(1).XEndPoints;
+        ytipsSummaryPC = summaryPCBar(1).YEndPoints;
+        labelsSummaryPC = string(summaryPCBar(1).YData + "%");
+        text(xtipsSummaryPC,ytipsSummaryPC,labelsSummaryPC,...
+            'HorizontalAlignment','center',...
+            'VerticalAlignment','bottom')
+        xlabel('Failure Type');
+        ylabel('Percentage (%)');
+        ylim([0 max(summaryDataPercent)*1.2+0.1]);
+        t_summaryPC = ['Build', string(buildList(m)), ' Test Summary on Percentage - ',...
+             buildTotalCnt(buildList(m) - min(buildList) + 1,1), ' Total Tests'];
+        title(join(t_summaryPC,''));
+        saveas(gcf, join([pwd,'\Plots\', t_summaryPC, '.png'],''));
+        close(gcf);
+        
+        
         %% =============================== %
         
         % DUTs used in test per Build
@@ -831,8 +870,6 @@ else
         end
         
     end
-
-
     
     % grouped build failure summary
     buildSummary = [buildFailCnt, buildCNRsCnt, buildCypressCnt, buildDirectCnt];
@@ -870,17 +907,75 @@ else
         'VerticalAlignment','bottom')
     
     xlabel('Build');
-    ylabel('Total Bugs');
+    ylabel('Fails');
     ylim([0 max(buildSummary, [], 'all')*1.2+0.1]);
     title('Test Failure Summary per Build');
     % set position and resolution
     set(sumfig,'position',[0,0,1920,1080]);
     saveas(sumfig, strcat(pwd,'\Plots\','Test Failure Summary per Build.png'));
     close(sumfig);
+    
+    % ================== %
+    
+    % grouped build failure summary on percentage
+    buildSummaryPC = [buildFailCnt, buildCNRsCnt, buildCypressCnt, buildDirectCnt] / curBuildTotalTest * 100;
+    buildSummaryPC = round(buildSummaryPC, 1); %round the percentage
+    
+    sumPCfig = figure();
+    summaryPCBar = bar(categorical(buildList), buildSummaryPC, 'grouped');
+    legend(summaryLabel);
+    % add labels to bar graph
+    xtipsSum1PC = summaryPCBar(1).XEndPoints;
+    ytipsSum1PC = summaryPCBar(1).YEndPoints;
+    labelsSum1PC = string(summaryPCBar(1).YData);
+    text(xtipsSum1PC,ytipsSum1PC,labelsSum1PC,...
+        'HorizontalAlignment','center',...
+        'VerticalAlignment','bottom',...
+        'FontSize', 7);
+    
+    xtipsSum2PC = summaryPCBar(2).XEndPoints;
+    ytipsSum2PC = summaryPCBar(2).YEndPoints;
+    labelsSum2PC = string(summaryPCBar(2).YData);
+    text(xtipsSum2PC,ytipsSum2PC,labelsSum2PC,...
+        'HorizontalAlignment','center',...
+        'VerticalAlignment','bottom',...
+        'FontSize', 7);
+    
+    xtipsSum3PC = summaryPCBar(3).XEndPoints;
+    ytipsSum3PC = summaryPCBar(3).YEndPoints;
+    labelsSum3PC = string(summaryPCBar(3).YData);
+    text(xtipsSum3PC,ytipsSum3PC,labelsSum3PC,...
+        'HorizontalAlignment','center',...
+        'VerticalAlignment','bottom',...
+        'FontSize', 7);
+    
+    xtipsSum4PC = summaryPCBar(4).XEndPoints;
+    ytipsSum4PC = summaryPCBar(4).YEndPoints;
+    labelsSum4PC = string(summaryPCBar(4).YData);
+    text(xtipsSum4PC,ytipsSum4PC,labelsSum4PC,...
+        'HorizontalAlignment','center',...
+        'VerticalAlignment','bottom',...
+        'FontSize', 7);
+    
+    xlabel('Build');
+    ylabel('Percentage (%)');
+    ylim([0 max(buildSummaryPC, [], 'all')*1.2+0.1]);
+    title('Test Failure Summary per Build on Percentage');
+    % set position and resolution
+    set(sumPCfig,'position',[0,0,1920,1080]);
+    saveas(sumPCfig, strcat(pwd,'\Plots\','Test Failure Summary per Build on Percentage.png'));
+    %close(sumPCfig);
+    
+    
+    
     %% =============================== %
     
     % plot real fails count per build
-    realCntBar = bar(categorical(buildList), buildFailCnt);
+    realCntBar = bar(categorical(buildList), buildFailCnt, 'facecolor', 'flat');
+    
+    % set bar color
+    realCntBar.CData = [0 114 189] / 255;
+    
     % add labels to bar graph
     xtipsRealCnt = realCntBar(1).XEndPoints;
     ytipsRealCnt = realCntBar(1).YEndPoints;
@@ -889,15 +984,45 @@ else
         'HorizontalAlignment','center',...
         'VerticalAlignment','bottom')
     xlabel('Build');
-    ylabel('Total Bugs');
+    ylabel('Fails');
     ylim([0 max(buildFailCnt)*1.2+0.1]);
-    title('Real Fail Count per Build');
-    saveas(gcf, strcat(pwd,'\Plots\','Real Fail Count per Build.png'));
+    title('Real Issue');
+    % set position and resolution
+    set(gcf,'position',[0,0,1920,1080]);
+    saveas(gcf, strcat(pwd,'\Plots\','Real Issue.png'));
+    close(gcf);
+    %=====================%
+    
+    % plot real fails count per build on Percentage
+    buildFailCntPC = buildFailCnt / curBuildTotalTest * 100;
+    realCntBarPC = bar(categorical(buildList), buildFailCntPC, 'facecolor', 'flat');
+    
+    % set bar color
+    realCntBarPC.CData = [0 114 189] / 255;
+    
+    % add labels to bar graph
+    xtipsRealCntPC = realCntBarPC(1).XEndPoints;
+    ytipsRealCntPC = realCntBarPC(1).YEndPoints;
+    labelsRealCntPC = string(realCntBarPC(1).YData);
+    text(xtipsRealCntPC,ytipsRealCntPC,labelsRealCntPC,...
+        'HorizontalAlignment','center',...
+        'VerticalAlignment','bottom')
+    xlabel('Build');
+    ylabel('Percentage (%)');
+    ylim([0 max(buildFailCntPC)*1.2+0.1]);
+    title('Real Issue on Percentage');
+    % set position and resolution
+    set(gcf,'position',[0,0,1920,1080]);
+    saveas(gcf, strcat(pwd,'\Plots\','Real Issue on Percentage.png'));
     close(gcf);
     %% =============================== %
     
     % plot CNR count per build
-    cnrCntBar = bar(categorical(buildList), buildCNRsCnt);
+    cnrCntBar = bar(categorical(buildList), buildCNRsCnt, 'facecolor', 'flat');
+    
+    % set bar color
+    cnrCntBar.CData = [217 83 25] / 255;
+    
     % add labels to bar graph
     xtipsCNRCnt = cnrCntBar(1).XEndPoints;
     ytipsCNRCnt = cnrCntBar(1).YEndPoints;
@@ -906,15 +1031,47 @@ else
         'HorizontalAlignment','center',...
         'VerticalAlignment','bottom')
     xlabel('Build');
-    ylabel('Total CNR Count');
+    ylabel('Fails');
     ylim([0 max(buildCNRsCnt)*1.2+0.1]);
-    title('CNR Count per Build');
-    saveas(gcf, strcat(pwd,'\Plots\','CNR Count per Build.png'));
+    title('CNR Issue');
+    % set position and resolution
+    set(gcf,'position',[0,0,1920,1080]);
+    saveas(gcf, strcat(pwd,'\Plots\','CNR Issue.png'));
     close(gcf);
+    %=============================%
+    
+    % plot CNR count per build on Percentage
+    buildCNRsCntPC = buildCNRsCnt / curBuildTotalTest * 100;
+    cnrCntBarPC = bar(categorical(buildList), buildCNRsCntPC, 'facecolor', 'flat');
+    
+    % set bar color
+    cnrCntBarPC.CData = [217 83 25] / 255;
+    
+    % add labels to bar graph
+    xtipsCNRCntPC = cnrCntBarPC(1).XEndPoints;
+    ytipsCNRCntPC = cnrCntBarPC(1).YEndPoints;
+    labelsCNRCntPC = string(cnrCntBarPC(1).YData);
+    text(xtipsCNRCntPC,ytipsCNRCntPC,labelsCNRCntPC,...
+        'HorizontalAlignment','center',...
+        'VerticalAlignment','bottom')
+    xlabel('Build');
+    ylabel('Percentage (%)');
+    ylim([0 max(buildCNRsCntPC)*1.2+0.1]);
+    title('CNR Issue on Percentage');
+    % set position and resolution
+    set(gcf,'position',[0,0,1920,1080]);
+    saveas(gcf, strcat(pwd,'\Plots\','CNR Issue on Percentage.png'));
+    close(gcf);
+    
+    
     %% =============================== %
     
     % plot Cypress count per build
-    cypressCntBar = bar(categorical(buildList), buildCypressCnt);
+    cypressCntBar = bar(categorical(buildList), buildCypressCnt, 'facecolor', 'flat');
+    
+    % set bar color
+    cypressCntBar.CData = [237 177 32] / 255;
+    
     % add labels to bar graph
     xtipsCypressCnt = cypressCntBar(1).XEndPoints;
     ytipsCypressCnt = cypressCntBar(1).YEndPoints;
@@ -923,15 +1080,46 @@ else
         'HorizontalAlignment','center',...
         'VerticalAlignment','bottom')
     xlabel('Build');
-    ylabel('Total Cypress Issue');
+    ylabel('Fails');
     ylim([0 max(buildCypressCnt)*1.2+0.1]);
-    title('Cypress Issue Count per Build');
-    saveas(gcf, strcat(pwd,'\Plots\','Cypress Issue Count per Build.png'));
+    title('Cypress Issue');
+    % set position and resolution
+    set(gcf,'position',[0,0,1920,1080]);
+    saveas(gcf, strcat(pwd,'\Plots\','Cypress Issue.png'));
     close(gcf);
+    %======================%
+    
+    % plot Cypress count per build on Percentage
+    buildCypressCntPC = buildCypressCnt / curBuildTotalTest * 100;
+    cypressCntBarPC = bar(categorical(buildList), buildCypressCntPC, 'facecolor', 'flat');
+    
+    % set bar color
+    cypressCntBarPC.CData = [237 177 32] / 255;
+    
+    % add labels to bar graph
+    xtipsCypressCntPC = cypressCntBarPC(1).XEndPoints;
+    ytipsCypressCntPC = cypressCntBarPC(1).YEndPoints;
+    labelsCypressCntPC = string(cypressCntBarPC(1).YData);
+    text(xtipsCypressCntPC,ytipsCypressCntPC,labelsCypressCntPC,...
+        'HorizontalAlignment','center',...
+        'VerticalAlignment','bottom')
+    xlabel('Build');
+    ylabel('Percentage (%)');
+    ylim([0 max(buildCypressCntPC)*1.2+0.1]);
+    title('Cypress Issue on Percentage');
+    % set position and resolution
+    set(gcf,'position',[0,0,1920,1080]);
+    saveas(gcf, strcat(pwd,'\Plots\','Cypress Issue on Percentage.png'));
+    close(gcf);
+    
     %% =============================== %
     
     % plot Direct count per build
-    directCntBar = bar(categorical(buildList), buildDirectCnt);
+    directCntBar = bar(categorical(buildList), buildDirectCnt, 'facecolor', 'flat');
+    
+    % set bar color
+    directCntBar.CData = [126 47 142] / 255;
+    
     % add labels to bar graph
     xtipsDirectCnt = directCntBar(1).XEndPoints;
     ytipsDirectCnt = directCntBar(1).YEndPoints;
@@ -940,10 +1128,36 @@ else
         'HorizontalAlignment','center',...
         'VerticalAlignment','bottom')
     xlabel('Build');
-    ylabel('Total Direct Issue');
+    ylabel('Fails');
     ylim([0 max(buildDirectCnt)*1.2+0.1]);
-    title('Direct Issue Count per Build');
-    saveas(gcf, strcat(pwd,'\Plots\','Direct Issue Count per Build.png'));
+    title('Direct Connect Issue');
+    % set position and resolution
+    set(gcf,'position',[0,0,1920,1080]);
+    saveas(gcf, strcat(pwd,'\Plots\','Direct Connect Issue.png'));
+    close(gcf);
+    %============================%
+    
+    % plot Direct count per build
+    buildDirectCntPC = buildDirectCnt  / curBuildTotalTest * 100;
+    directCntBarPC = bar(categorical(buildList), buildDirectCntPC, 'facecolor', 'flat');
+    
+    % set bar color
+    directCntBarPC.CData = [126 47 142] / 255;
+    
+    % add labels to bar graph
+    xtipsDirectCntPC = directCntBarPC(1).XEndPoints;
+    ytipsDirectCntPC = directCntBarPC(1).YEndPoints;
+    labelsDirectCntPC = string(directCntBarPC(1).YData);
+    text(xtipsDirectCntPC,ytipsDirectCntPC,labelsDirectCntPC,...
+        'HorizontalAlignment','center',...
+        'VerticalAlignment','bottom')
+    xlabel('Build');
+    ylabel('Percentage (%)');
+    ylim([0 max(buildDirectCntPC)*1.2+0.1]);
+    title('Direct Connect Issue on Percentage');
+    % set position and resolution
+    set(gcf,'position',[0,0,1920,1080]);
+    saveas(gcf, strcat(pwd,'\Plots\','Direct Connect Issue on Percentage.png'));
     close(gcf);
 
     %% =============================== %
