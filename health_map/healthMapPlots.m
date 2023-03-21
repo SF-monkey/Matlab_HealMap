@@ -22,6 +22,7 @@ else
     % TotalBugs is inaccurate and should not be used!
     hm.TotalBugs(:) = 0;
     
+    
     % define oepration cycle category, same as the health map
     cycles = categorical({'BasicOp','DPAudio','LEXUSB','LEXPwr',...
         'Link', 'REXPwr', 'REXDevice', 'LEXDP',...
@@ -34,6 +35,7 @@ else
         'SideChannelCycle', 'RS232Cycle'});
     
     buildList = unique(hm.Build);
+    buildTotalTestList = zeros(18,1);
     
     %% Real fail/CNRs/Cypress/Direct count per build
     
@@ -64,7 +66,7 @@ else
         bT.TotalBugs(:) = 0;
         
         % total test count per build
-        buildTotalCnt(buildList(m) - min(buildList) + 1,1) = sum(bT.TotalTests);
+        buildTotalCnt(m,1) = sum(bT.TotalTests);
     
          %%%% Real count per build %%%%
         buildTotalReal = 0;
@@ -111,8 +113,8 @@ else
             RealCntByCycle.(char(n)) = cycleRealCnt;
             buildTotalReal = buildTotalReal + cycleRealCnt;
             % add the count to the according cycle
-            buildFailCnt(buildList(m) - min(buildList) + 1,1) =...
-                buildFailCnt(buildList(m) - min(buildList) + 1,1) + cycleRealCnt;
+            buildFailCnt(m,1) =...
+                buildFailCnt(m,1) + cycleRealCnt;
         end
         
         % add the build number and the final RealCntByCycle result to master table
@@ -185,8 +187,8 @@ else
             cnrCntByCycle.(char(n)) = sum(x);
             buildTotalCNR = buildTotalCNR + sum(x);
             % add the count to the according cycle
-            buildCNRsCnt(buildList(m) - min(buildList) + 1,1) =...
-                buildCNRsCnt(buildList(m) - min(buildList) + 1,1) + sum(x);
+            buildCNRsCnt(m,1) =...
+                buildCNRsCnt(m,1) + sum(x);
             cnrFilter = cnrFilter | x;
         end
         
@@ -256,8 +258,8 @@ else
             cyCntByCycle.(char(n)) = sum(x);
             buildTotalCypress = buildTotalCypress + sum(x);
             % add the count to the according cycle
-            buildCypressCnt(buildList(m) - min(buildList) + 1,1) =...
-                buildCypressCnt(buildList(m) - min(buildList) + 1,1) + sum(x);
+            buildCypressCnt(m,1) =...
+                buildCypressCnt(m,1) + sum(x);
             cyFilter = cyFilter | x;
         end
         
@@ -327,8 +329,8 @@ else
             drCntByCycle.(char(n)) = sum(x);
             buildTotalDirect = buildTotalDirect + sum(x);
             % add the count to the according cycle
-            buildDirectCnt(buildList(m) - min(buildList) + 1,1) =...
-                buildDirectCnt(buildList(m) - min(buildList) + 1,1) + sum(x);
+            buildDirectCnt(m,1) =...
+                buildDirectCnt(m,1) + sum(x);
             drFilter = drFilter | x;
         end
         
@@ -374,21 +376,19 @@ else
         saveas(barDirectHost, strcat(pwd,'\Plots\Direct\', 'Total Direct Issues Break Down by Host in Build ', string(buildList(m)), '.png'));
         close(gcf);
         %% =============================== %        
-        curBuildTotalTest = buildTotalCnt(buildList(m) - min(buildList) + 1,1);
+        % curBuildTotalTest = buildTotalCnt(buildList(m) - min(buildList) + 1,1);
+        curBuildTotalTest = buildTotalCnt(m,1);
+        buildTotalTestList(m) = curBuildTotalTest;
         
-        buildPassCnt(buildList(m) - min(buildList) + 1,1) =...
-            buildTotalCnt(buildList(m) - min(buildList) + 1,1) -...
-            buildDirectCnt(buildList(m) - min(buildList) + 1,1) -...
-            buildCypressCnt(buildList(m) - min(buildList) + 1,1) -...
-            buildCNRsCnt(buildList(m) - min(buildList) + 1,1) -...
-            buildFailCnt(buildList(m) - min(buildList) + 1,1);
+        buildPassCnt(m,1) = buildTotalCnt(m,1) - buildDirectCnt(m,1) -...
+                            buildCypressCnt(m,1) - buildCNRsCnt(m,1) - buildFailCnt(m,1);
         %% =============================== %
         
         % Test failure summary plot per build
-        summaryData = [buildFailCnt(buildList(m) - min(buildList) + 1,1) ...
-            buildCNRsCnt(buildList(m) - min(buildList) + 1,1) ...
-            buildCypressCnt(buildList(m) - min(buildList) + 1,1) ...
-            buildDirectCnt(buildList(m) - min(buildList) + 1,1)];
+        summaryData = [buildFailCnt(m,1) ...
+            buildCNRsCnt(m,1) ...
+            buildCypressCnt(m,1) ...
+            buildDirectCnt(m,1)];
         
         summaryBar = bar(summaryLabel, summaryData, 'facecolor', 'flat');
         
@@ -409,7 +409,7 @@ else
         ylabel('Count');
         ylim([0 max(summaryData)*1.2+0.1]);
         t_summary = ['Build', string(buildList(m)), ' Test Summary - ',...
-             buildTotalCnt(buildList(m) - min(buildList) + 1,1), ' Total Tests'];
+             buildTotalCnt(m,1), ' Total Tests'];
         title(join(t_summary,''));
         saveas(gcf, join([pwd,'\Plots\', t_summary, '.png'],''));
         close(gcf);
@@ -437,7 +437,7 @@ else
         ylabel('Percentage (%)');
         ylim([0 max(summaryDataPercent)*1.2+0.1]);
         t_summaryPC = ['Build', string(buildList(m)), ' Test Summary on Percentage - ',...
-             buildTotalCnt(buildList(m) - min(buildList) + 1,1), ' Total Tests'];
+             buildTotalCnt(m,1), ' Total Tests'];
         title(join(t_summaryPC,''));
         saveas(gcf, join([pwd,'\Plots\', t_summaryPC, '.png'],''));
         close(gcf);
@@ -918,7 +918,7 @@ else
     % ================== %
     
     % grouped build failure summary on percentage
-    buildSummaryPC = [buildFailCnt, buildCNRsCnt, buildCypressCnt, buildDirectCnt] / curBuildTotalTest * 100;
+    buildSummaryPC = [buildFailCnt, buildCNRsCnt, buildCypressCnt, buildDirectCnt] ./ buildTotalTestList * 100;
     buildSummaryPC = round(buildSummaryPC, 1); %round the percentage
     
     sumPCfig = figure();
@@ -994,7 +994,7 @@ else
     %=====================%
     
     % plot real fails count per build on Percentage
-    buildFailCntPC = buildFailCnt / curBuildTotalTest * 100;
+    buildFailCntPC = buildFailCnt ./ buildTotalTestList * 100;
     realCntBarPC = bar(categorical(buildList), buildFailCntPC, 'facecolor', 'flat');
     
     % set bar color
@@ -1041,7 +1041,7 @@ else
     %=============================%
     
     % plot CNR count per build on Percentage
-    buildCNRsCntPC = buildCNRsCnt / curBuildTotalTest * 100;
+    buildCNRsCntPC = buildCNRsCnt ./ buildTotalTestList * 100;
     cnrCntBarPC = bar(categorical(buildList), buildCNRsCntPC, 'facecolor', 'flat');
     
     % set bar color
@@ -1090,7 +1090,7 @@ else
     %======================%
     
     % plot Cypress count per build on Percentage
-    buildCypressCntPC = buildCypressCnt / curBuildTotalTest * 100;
+    buildCypressCntPC = buildCypressCnt ./ buildTotalTestList * 100;
     cypressCntBarPC = bar(categorical(buildList), buildCypressCntPC, 'facecolor', 'flat');
     
     % set bar color
@@ -1138,7 +1138,7 @@ else
     %============================%
     
     % plot Direct count per build
-    buildDirectCntPC = buildDirectCnt  / curBuildTotalTest * 100;
+    buildDirectCntPC = buildDirectCnt ./ buildTotalTestList * 100;
     directCntBarPC = bar(categorical(buildList), buildDirectCntPC, 'facecolor', 'flat');
     
     % set bar color
