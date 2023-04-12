@@ -15,7 +15,7 @@ else
     mkdir Plots\Usage
     
     % load the table
-    % must run the 'color_test.m' once if health map file is updated.
+    % load the fail device table
     healthMap = readtable(strcat(fp,fn), 'Sheet', "Health Map");
     failDev = readtable(strcat(fp,'failDevices.xlsx'), 'Format', 'auto');
     hm = [healthMap, failDev(1:height(healthMap), :)];
@@ -39,14 +39,13 @@ else
     
     %% Real fail/CNRs/Cypress/Direct count per build
     
-    % 
+    % create lists for different category
     [buildFailCnt, buildCNRsCnt, buildCypressCnt, ...
      buildDirectCnt, buildTotalCnt, buildPassCnt] = ...
         deal(zeros(length(buildList),1));
 
     summaryLabel = categorical({'Real', 'CNR', 'Cypress','Direct'});
     summaryLabel = reordercats(summaryLabel, {'Real', 'CNR', 'Cypress','Direct'});
-
 
     % create lists for variable types
     varTypesCycle = string(zeros(14,1))';
@@ -309,7 +308,7 @@ else
         buildTotalDirect = 0;
         
         % create Direct counter table by cycle
-        drCntByCycle = table('Size', [1 14],...
+        dirCntByCycle = table('Size', [1 14],...
             'VariableTypes',varTypesCycle,...
             'VariableNames', hm.Properties.VariableNames(22:35));
         
@@ -319,22 +318,22 @@ else
             'VariableNames', unique(hm.Host));
         
         % create zero array with the same height as the Build table
-        drFilter = zeros(height(bT),1);
+        dirFilter = zeros(height(bT),1);
         
         %%%%% Total Direct Break Down by Cycles in each Build %%%%%
         
         for n = bT.Properties.VariableNames(22:35)
             % x is a logical array with same height as build table
             x = contains(bT.(char(n)), 'Direct');
-            drCntByCycle.(char(n)) = sum(x);
+            dirCntByCycle.(char(n)) = sum(x);
             buildTotalDirect = buildTotalDirect + sum(x);
             % add the count to the according cycle
             buildDirectCnt(m,1) =...
                 buildDirectCnt(m,1) + sum(x);
-            drFilter = drFilter | x;
+            dirFilter = dirFilter | x;
         end
         
-        barDirectCycle = bar(cycles, table2array(drCntByCycle(1,:)));
+        barDirectCycle = bar(cycles, table2array(dirCntByCycle(1,:)));
         % add labels to bar graph
         xtipsDirectCycle = barDirectCycle(1).XEndPoints;
         ytipsDirectCycle = barDirectCycle(1).YEndPoints;
@@ -343,21 +342,21 @@ else
             'HorizontalAlignment','center',...
             'VerticalAlignment','bottom')
         ylabel('Total Direct');
-        ylim([0 max(table2array(drCntByCycle(1,:)))*1.2+0.1]);
+        ylim([0 max(table2array(dirCntByCycle(1,:)))*1.2+0.1]);
         title(strcat(string(buildTotalDirect), ' Total Direct Issues Break Down by Cycles in Build ', string(buildList(m))));
         saveas(barDirectCycle, strcat(pwd,'\Plots\Direct\', 'Total Direct Issues Break Down by Cycles in Build ', string(buildList(m)), '.png'));
         close(gcf);
        %% =============================== %
         
         %%%%% Total Directs Break Down by Hosts in each Build %%%%%
-        drBT = bT(drFilter, :);
+        dirBT = bT(dirFilter, :);
         
-        for n = 1:height(drBT)
+        for n = 1:height(dirBT)
             % find how many times Direct occurs within a row
-            x = sum(contains(table2cell(drBT(n, 22:35)), 'Direct'));
+            x = sum(contains(table2cell(dirBT(n, 22:35)), 'Direct'));
             % add the count to the according Host 
-            drCntByHost.(char(table2cell(drBT(n,10)))) =...
-                drCntByHost.(char(table2cell(drBT(n,10)))) + x;
+            drCntByHost.(char(table2cell(dirBT(n,10)))) =...
+                drCntByHost.(char(table2cell(dirBT(n,10)))) + x;
         end
         
         drByHost = figure();
@@ -401,7 +400,10 @@ else
         % add labels to bar graph
         xtipsSummary = summaryBar(1).XEndPoints;
         ytipsSummary = summaryBar(1).YEndPoints;
-        labelsSummary = string(summaryBar(1).YData);
+        labelsSummary = string(summaryBar(1).YData) +...
+                        " (" +...
+                        string(round(summaryBar(1).YData/curBuildTotalTest * 100, 2)) +...
+                        '%)';
         text(xtipsSummary,ytipsSummary,labelsSummary,...
             'HorizontalAlignment','center',...
             'VerticalAlignment','bottom')
@@ -416,7 +418,7 @@ else
         % ==================== %
         
         % Test failure summary plot per build on percentage
-        summaryDataPercent = summaryData/curBuildTotalTest * 100;
+        summaryDataPercent = round(summaryData/curBuildTotalTest * 100, 2);
         
         summaryPCBar = bar(summaryLabel, summaryDataPercent, 'facecolor', 'flat');
         
@@ -442,6 +444,27 @@ else
         saveas(gcf, join([pwd,'\Plots\', t_summaryPC, '.png'],''));
         close(gcf);
         
+        
+        % Test failure summary pie plot per build on percentage
+        piesummaryLabel = {'Real', 'CNR', 'Cypress', 'Direct'};
+        
+        summaryDataPercentR = string(piesummaryLabel) +...
+                              ': ' +...
+                              string(round(summaryDataPercent, 2)) + '%';
+
+        summaryPCPie = figure();
+        pie(summaryDataPercent,[1 0 1 0], summaryDataPercentR);
+        legend(piesummaryLabel, 'location', 'southeastoutside');
+        
+        colormap([0 114 189;
+                  217 83 25;
+                  237 177 32;
+                  126 47 142] / 255);   
+        title(join(t_summaryPC,''));
+%         set(findobj(summaryPCPie,'type','text'),'fontsize',9);
+        set(summaryPCPie,'position',[0,0,1920,1080]);
+        saveas(gcf, join([pwd,'\Plots\', t_summaryPC, '_pie','.png'],''));
+        close(gcf);
         
         %% =============================== %
         
